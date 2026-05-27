@@ -29,7 +29,7 @@ const ClientPortal = () => {
   const [budgetOverview, setBudgetOverview] = useState(null);
   const [documentSummary, setDocumentSummary] = useState([]);
   const [kpiMetrics, setKpiMetrics] = useState([]);
-  const [roleUpdates, setRoleUpdates] = useState({ admin: [], developer: [] });
+  const [feedItems, setFeedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -41,6 +41,7 @@ const ClientPortal = () => {
   const [showProjects, setShowProjects] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [showDocumentsPanel, setShowDocumentsPanel] = useState(false);
 
   useEffect(() => {
     loadClientData();
@@ -98,6 +99,23 @@ const ClientPortal = () => {
     }
   };
 
+  const handleScheduleMeeting = () => {
+    const mailtoLink = "mailto:support@greggoryfoundation.org?subject=Client%20Portal%20Meeting%20Request&body=Hello%20Greggory%20Foundation%20Team,%0A%0AI'd%20like%20to%20schedule%20a%20meeting%20to%20review%20my%20project%20dashboard.%0A%0AThank%20you.%0A";
+    window.open(mailtoLink, "_blank");
+  };
+
+  const handleViewDocuments = () => {
+    setShowDocumentsPanel(true);
+    setShowProjects(false);
+    setShowInvoices(false);
+    setShowMessages(false);
+    setShowQuickActions(false);
+  };
+
+  const handleCallSupport = () => {
+    window.location.href = "tel:+254799789956";
+  };
+
   const loadClientData = async () => {
     try {
       setError(null);
@@ -126,7 +144,7 @@ const ClientPortal = () => {
       setBudgetOverview(dashboard.budgetOverview || null);
       setDocumentSummary(dashboard.documentSummary || []);
       setKpiMetrics(dashboard.kpiMetrics || []);
-      setRoleUpdates(dashboard.roleUpdates || { admin: [], developer: [] });
+      setFeedItems(dashboard.feedItems || []);
     } catch (err) {
       console.error("Error loading client data:", err);
       setError(err.message || "Failed to load dashboard data");
@@ -316,84 +334,59 @@ const ClientPortal = () => {
                         Actionable transparency
                       </p>
                       <h3 className="mt-2 text-2xl font-semibold text-slate-900">
-                        Administration & development updates
+                        Portal updates and notifications
                       </h3>
                     </div>
                     <ShieldCheck className="h-10 w-10 text-teal-600" />
                   </div>
                   <div className="space-y-4">
-                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">
-                            Admin responsibilities
-                          </h4>
-                          <p className="mt-2 text-sm text-slate-600">
-                            Responsible for governance, financial accuracy, and
-                            client-facing approvals.
-                          </p>
-                        </div>
-                        <Users className="h-10 w-10 text-slate-400" />
-                      </div>
-                      <div className="mt-4 grid gap-3">
-                        {roleUpdates.admin.map((item) => (
-                          <div
-                            key={item.title}
-                            className="rounded-3xl bg-white p-4 shadow-sm border border-slate-100"
-                          >
-                            <div className="flex items-center gap-3">
-                              <CheckCircle className="h-5 w-5 text-emerald-500" />
-                              <p className="font-semibold text-slate-900">
-                                {item.title}
+                    {feedItems.length > 0 ? (
+                      <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                        <div className="grid gap-4">
+                          {feedItems.map((item) => (
+                            <div key={item.id} className="rounded-3xl bg-white p-4 shadow-sm border border-slate-100">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <h4 className="font-semibold text-slate-900">
+                                    {item.title}
+                                  </h4>
+                                  <p className="mt-2 text-sm text-slate-500">
+                                    {item.type.replace(/_/g, ' ')} • {item.priority}
+                                  </p>
+                                </div>
+                                <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent'}
+                                </span>
+                              </div>
+                              <p className="mt-3 text-sm text-slate-600">
+                                {item.description || 'A new update is available for your portal.'}
                               </p>
+                              {item.actionUrl && (
+                                <a
+                                  href={item.actionUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-teal-600 hover:text-teal-700"
+                                >
+                                  View details
+                                  <ChevronRight className="w-4 h-4" />
+                                </a>
+                              )}
                             </div>
-                            <p className="mt-2 text-sm text-slate-600">
-                              {item.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h4 className="font-semibold text-slate-900">
-                            Developer responsibilities
-                          </h4>
-                          <p className="mt-2 text-sm text-slate-600">
-                            Focused on delivery quality, task execution, and
-                            technical updates.
-                          </p>
+                          ))}
                         </div>
-                        <ClipboardList className="h-10 w-10 text-slate-400" />
                       </div>
-                      <div className="mt-4 space-y-3">
-                        {roleUpdates.developer.map((item) => (
-                          <div
-                            key={item.title}
-                            className="rounded-3xl bg-white p-4 shadow-sm border border-slate-100"
-                          >
-                            <div className="flex items-center gap-3">
-                              <CheckCircle className="h-5 w-5 text-sky-500" />
-                              <p className="font-semibold text-slate-900">
-                                {item.title}
-                              </p>
-                            </div>
-                            <p className="mt-2 text-sm text-slate-600">
-                              {item.description}
-                            </p>
-                          </div>
-                        ))}
+                    ) : (
+                      <div className="rounded-3xl border border-slate-100 bg-slate-50 p-6 text-center text-slate-500">
+                        No recent portal updates. Everything is current, and your feed will refresh automatically.
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-        {/* Quick Stats */}
         {!showProjects &&
           !showInvoices &&
           !showMessages &&
@@ -810,10 +803,44 @@ const ClientPortal = () => {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 text-amber-600 text-sm font-bold hover:text-amber-700 flex items-center justify-center py-3 border-2 border-amber-200 rounded-xl hover:border-amber-300 transition-all">
+                <button onClick={() => setShowMessages(true)} className="w-full mt-4 text-amber-600 text-sm font-bold hover:text-amber-700 flex items-center justify-center py-3 border-2 border-amber-200 rounded-xl hover:border-amber-300 transition-all">
                   View All Messages
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDocumentsPanel && (
+          <div className="max-w-7xl mx-auto animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-6 h-6" />
+                  <div>
+                    <h3 className="text-xl font-bold">Document Center</h3>
+                    <p className="text-sm text-slate-300">Review the latest document summaries and statuses.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDocumentsPanel(false)}
+                  className="rounded-xl border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="p-6 grid gap-4 sm:grid-cols-2">
+                {documentSummary.map((doc) => (
+                  <div key={doc.id} className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                    <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
+                      {doc.label}
+                    </p>
+                    <p className="mt-3 text-3xl font-semibold text-slate-900">
+                      {doc.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -835,7 +862,10 @@ const ClientPortal = () => {
                 </button>
               </div>
               <div className="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border-2 border-teal-100 hover:border-teal-300 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <button
+                  onClick={handleScheduleMeeting}
+                  className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border-2 border-teal-100 hover:border-teal-300 hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
                   <div className="p-4 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
                     <Calendar className="w-8 h-8 text-white" />
                   </div>
@@ -856,7 +886,10 @@ const ClientPortal = () => {
                   </span>
                 </button>
 
-                <button className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-100 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <button
+                  onClick={handleViewDocuments}
+                  className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-100 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
                   <div className="p-4 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
                     <FileText className="w-8 h-8 text-white" />
                   </div>
@@ -865,7 +898,10 @@ const ClientPortal = () => {
                   </span>
                 </button>
 
-                <button className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-100 hover:border-purple-300 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <button
+                  onClick={handleCallSupport}
+                  className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-100 hover:border-purple-300 hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
                   <div className="p-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow">
                     <Phone className="w-8 h-8 text-white" />
                   </div>

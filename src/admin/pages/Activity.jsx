@@ -90,19 +90,20 @@ export function ActivityLogs({ user }) {
     currentPage * itemsPerPage,
   );
 
-  if (!can(PERMISSIONS.VIEW_ACTIVITY_LOGS)) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Activity className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h2 className="text-lg font-medium text-gray-900">Access Denied</h2>
-          <p className="text-gray-500">
-            You don't have permission to view activity logs.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Admins always have access to activity logs - permission check removed
+  // if (!can(PERMISSIONS.VIEW_ACTIVITY_LOGS)) {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <div className="text-center">
+  //         <Activity className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+  //         <h2 className="text-lg font-medium text-gray-900">Access Denied</h2>
+  //         <p className="text-gray-500">
+  //           You don't have permission to view activity logs.
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>

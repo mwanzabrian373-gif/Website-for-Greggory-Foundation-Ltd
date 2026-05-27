@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FolderKanban, Plus, Search, Edit2, Trash2, Calendar, User, DollarSign, Clock, MoreVertical, Filter, TrendingUp, AlertCircle, CheckCircle, XCircle, Target, FileText, MessageSquare, Star, Flag, LayoutDashboard, BarChart3 } from "lucide-react";
-import { API_BASE_URL } from "../../services/api";
+import { API_BASE_URL, adminAPI } from "../../services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
 

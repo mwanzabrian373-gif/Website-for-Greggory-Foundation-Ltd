@@ -83,6 +83,14 @@ const adminRoutes = require('./routes/admin');
 const adminVerificationRoutes = require('./routes/admin-verification');
 const developerVerificationRoutes = require('./routes/developer-verification');
 const easyAdminRoutes = require('./routes/easy-admin');
+const smsRoutes = require('./routes/sms');
+const whatsappRoutes = require('./routes/whatsapp');
+const tasksRoutes = require('./routes/tasks');
+const crmRoutes = require('./routes/crm');
+const analyticsRoutes = require('./routes/analytics');
+const reportsRoutes = require('./routes/reports');
+const communicationRoutes = require('./routes/communication');
+const securityRoutes = require('./routes/security');
 
 // Use routes
 app.use('/api/properties', propertyRoutes);
@@ -95,6 +103,22 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin-verification', adminVerificationRoutes);
 app.use('/api/developer-verification', developerVerificationRoutes);
 app.use('/api/easy-admin', easyAdminRoutes);
+app.use('/api/sms', smsRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/crm', crmRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/communication', communicationRoutes);
+app.use('/api/security', securityRoutes);
+app.use('/api/sms', smsRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/crm', crmRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/communication', communicationRoutes);
+app.use('/api/security', securityRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

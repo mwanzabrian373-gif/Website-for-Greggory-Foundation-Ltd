@@ -513,7 +513,7 @@ app.post("/api/users/login", async (req, res) => {
     }
 
     const [users] = await mainDb.query(
-      "SELECT id, email, first_name, last_name, display_name, password_hash, profile_photo_blob IS NOT NULL AS has_photo FROM users WHERE LOWER(email) = ? AND deleted_at IS NULL",
+      "SELECT id, email, first_name, last_name, display_name, password_hash, profile_photo_blob, profile_photo_mime_type, profile_photo_blob IS NOT NULL AS has_photo FROM users WHERE LOWER(email) = ? AND deleted_at IS NULL",
       [normalizedEmail],
     );
 
@@ -555,6 +555,14 @@ app.post("/api/users/login", async (req, res) => {
         .json({ success: false, message: "Invalid credentials" });
     }
 
+    // Convert blob to base64 if exists
+    let profilePhotoData = null;
+    if (user.profile_photo_blob) {
+      const base64 = Buffer.from(user.profile_photo_blob).toString('base64');
+      const mimeType = user.profile_photo_mime_type || 'image/jpeg';
+      profilePhotoData = `data:${mimeType};base64,${base64}`;
+    }
+
     res.json({
       success: true,
       user: {
@@ -567,6 +575,7 @@ app.post("/api/users/login", async (req, res) => {
         profile_photo_url: user.has_photo
           ? `/api/users/profile-photo/${user.id}`
           : null,
+        profile_photo_blob: profilePhotoData,
         role: "user",
       },
     });
@@ -4055,6 +4064,24 @@ try {
   console.log("[SERVER] WhatsApp routes loaded successfully");
 } catch (error) {
   console.error("[SERVER] Error loading WhatsApp routes:", error.message);
+}
+
+// Admin Dashboard Routes
+try {
+  const adminRoutes = require("./backend/routes/admin");
+  app.use("/api/admin", adminRoutes);
+  console.log("[SERVER] Admin dashboard routes loaded successfully");
+} catch (error) {
+  console.error("[SERVER] Error loading admin dashboard routes:", error.message);
+}
+
+// Content Routes
+try {
+  const contentRoutes = require("./backend/routes/content");
+  app.use("/api/content", contentRoutes);
+  console.log("[SERVER] Content routes loaded successfully");
+} catch (error) {
+  console.error("[SERVER] Error loading content routes:", error.message);
 }
 
 // Error handling middleware

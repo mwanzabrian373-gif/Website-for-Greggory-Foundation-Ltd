@@ -252,6 +252,18 @@ export const contentAPI = {
 // Health check
 export const healthCheck = () => apiCall("/health");
 
+// Admin API (announcements, project updates, portal feed)
+export const adminAPI = {
+  getAnnouncements: () => apiCall('/admin/announcements'),
+  createAnnouncement: (payload) =>
+    apiCall('/admin/announcements', { method: 'POST', body: JSON.stringify(payload) }),
+  getProjectUpdates: () => apiCall('/admin/project-updates'),
+  createProjectUpdate: (payload) =>
+    apiCall('/admin/project-updates', { method: 'POST', body: JSON.stringify(payload) }),
+  createPortalFeed: (payload) =>
+    apiCall('/admin/portal-feed', { method: 'POST', body: JSON.stringify(payload) }),
+};
+
 export default {
   properties: propertiesAPI,
   companies: companiesAPI,
@@ -261,5 +273,6 @@ export default {
   users: usersAPI,
   content: contentAPI,
   images: imagesAPI,
+  admin: adminAPI,
   healthCheck,
 };

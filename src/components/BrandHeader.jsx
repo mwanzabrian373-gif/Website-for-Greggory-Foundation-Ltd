@@ -18,6 +18,7 @@ const BrandHeader = ({
   responsive = false,
 }) => {
   const isCenter = align === 'center'
+  const isRight = align === 'right'
   const sizes = {
     sm: {
       title: 'text-base sm:text-lg',
@@ -41,15 +42,15 @@ const BrandHeader = ({
   const s = sizes[size] || sizes.md
 
   return (
-    <div className={`inline-block bg-white/90 shadow-md ${s.border} border-navy-900/20 rounded-lg ${s.padding} ${isCenter ? 'mx-auto' : ''} ${wrapperClass}`}>
-      <div className={`flex ${isCenter ? 'flex-col items-center text-center' : 'flex-row items-start'}`}>
-        <BrandMark className="w-20 h-10 sm:w-24 sm:h-12 md:w-32 md:h-16 mr-3 sm:mr-4" />
-        <div className={`flex flex-col ${isCenter ? 'items-center text-center' : 'items-start'}`}>
-          <h1 className={`${s.title} font-extrabold text-navy-900`}>
+    <div className={`inline-block ${s.padding} ${isCenter ? 'mx-auto' : ''} ${wrapperClass}`}>
+      <div className={`flex ${isCenter ? 'flex-col items-center text-center' : isRight ? 'flex-row-reverse items-end' : 'flex-row items-start'}`}>
+        <BrandMark className={`w-20 h-10 sm:w-24 sm:h-12 md:w-32 md:h-16 ${isRight ? 'ml-3 sm:ml-4' : 'mr-3 sm:mr-4'}`} />
+        <div className={`flex flex-col ${isCenter ? 'items-center text-center' : isRight ? 'items-end text-right' : 'items-start'}`}>
+          <h1 className={`${s.title} font-extrabold text-white drop-shadow-lg`}>
             {wordmark}
           </h1>
           {tagline && (
-            <p className={`${s.tagline} font-medium text-teal-700 mt-1`}>
+            <p className={`${s.tagline} font-medium text-teal-200 mt-1 drop-shadow-md`}>
               {tagline}
             </p>
           )}

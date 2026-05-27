@@ -112,6 +112,7 @@ const Login = () => {
         // has_photo tells the Navbar whether to build the photo URL from the id.
         // The Navbar always reconstructs the URL dynamically — nothing is stored.
         has_photo: !!userData.has_photo,
+        profile_photo_blob: userData.profile_photo_blob || null,
         profilePhotoData: userData.profilePhotoData || null,
         profile_image_id: userData.profile_image_id || null
       };

@@ -1,6 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
 import { ArrowRight, Target, Lightbulb, CheckCircle, TrendingUp, Users, Award } from 'lucide-react'
-import BrandHeader from '../components/BrandHeader'
 import { useAuth } from '../context/AuthContext'
 
 const Home = () => {
@@ -35,35 +34,21 @@ const Home = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white py-16 sm:py-20 md:py-32 min-h-[calc(100vh-120px)] md:min-h-[calc(100vh-160px)]">
+      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white py-24 sm:py-28 md:py-36 min-h-[calc(100vh-120px)] md:min-h-[calc(100vh-180px)]">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIi8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         
-        {/* Background Image on Right Side - Hidden on mobile for better performance */}
+        {/* Background Image covering entire hero area */}
         <div 
-          className="hidden sm:block absolute right-0 top-0 h-full w-1/3 md:w-1/2 bg-contain bg-center bg-no-repeat opacity-30"
-          style={{ backgroundImage: "url('/brand-header.png/suti4.PNG')" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+          style={{ backgroundImage: "url('/brand-header.png/suti4.PNG')", backgroundPosition: "center 30%" }}
         ></div>
         
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8 relative">
-          <div className="flex justify-start md:justify-start mb-4 sm:mb-6">
-            <BrandHeader
-              size="lg"
-              markOnlyOnMobile={false}
-              responsive={true}
-              wrapperClass="h-[100px] sm:h-[120px] md:h-[144px]"
-            />
-          </div>
-          <div className="w-full">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
-              <span className="block sm:inline">The Greggory Foundation Ltd.</span>
-              <span className="block text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-teal-200 mt-2 sm:mt-0">
-                Your Vision Delivered with Trust
-              </span>
-              <span className="block md:inline md:ml-4 md:pl-4 md:border-l md:border-teal-500 text-teal-200 text-base sm:text-lg md:text-xl lg:text-2xl font-semibold mt-2 sm:mt-0">
-                Strategic Project Development for all clients
-              </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-4xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-white">
+              Strategic Project Development for all clients
             </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 text-gray-300">
+            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-10 sm:mb-12 text-gray-300 max-w-3xl">
               The Greggory Foundation Ltd. – Turning your vision into a successfully managed project.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -81,7 +66,7 @@ const Home = () => {
 
       {/* Video Section */}
       <section className="py-12 sm:py-16 bg-gray-900 text-white">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Featured Video</h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-300">
@@ -113,7 +98,7 @@ const Home = () => {
 
       {/* Introduction Section */}
       <section className="py-12 sm:py-16 bg-white">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-full sm:max-w-3xl mx-auto text-center">
             <h2 className="section-title text-2xl sm:text-3xl md:text-4xl">Empowering Your Success Through Comprehensive Solutions</h2>
             <p className="section-subtitle mx-auto mt-4 text-sm sm:text-base md:text-lg">
@@ -125,7 +110,7 @@ const Home = () => {
 
       {/* Services Overview */}
       <section className="py-12 sm:py-16 bg-gray-50">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="section-title text-2xl sm:text-3xl md:text-4xl">Our Core Services</h2>
             <p className="section-subtitle mx-auto mt-4 text-sm sm:text-base md:text-lg">
@@ -151,7 +136,7 @@ const Home = () => {
 
       {/* Stats Section */}
       <section className="py-12 sm:py-16 bg-teal-600 text-white">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
@@ -168,7 +153,7 @@ const Home = () => {
 
       {/* Testimonial Section */}
       <section className="py-12 sm:py-16 bg-white">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gray-50 rounded-lg p-6 sm:p-8 md:p-12">
             <svg className="w-10 h-10 sm:w-12 sm:h-12 text-teal-600 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
@@ -184,7 +169,7 @@ const Home = () => {
 
       {/* CTA Section */}
       <section className="py-12 sm:py-16 bg-gradient-to-r from-navy-900 to-navy-800 text-white">
-        <div className="w-full pl-0 pr-0 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
             Ready to Manage Your Success?
           </h2>

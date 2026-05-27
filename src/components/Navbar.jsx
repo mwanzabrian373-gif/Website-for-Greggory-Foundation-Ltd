@@ -1,55 +1,33 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, LogIn, ChevronDown, Briefcase, User } from 'lucide-react'
-import BrandHeader from './BrandHeader'
+import { Menu, X, LogIn } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import AuthPlatformModal from './AuthPlatformModal'
 import companies from '../data/companies'
-import { hasAdminToken } from '../utils/adminSession'
-import { getApiUrl } from '../services/api'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [companiesDropdownOpen, setCompaniesDropdownOpen] = useState(false)
-  const [adminLoginModalOpen, setAdminLoginModalOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { isAuthenticated, logout, user } = useAuth()
-  // Use a relative path so the Vite proxy forwards it to the backend.
-  // Works on both localhost:5173 and network IP (192.168.x.x:5173).
-  const profilePhotoUrl = user?.has_photo && (user?.id || user?.userId)
-    ? `/api/users/profile-photo/${user.id || user.userId}`
-    : null
-
-  const [hasAdminSessionToken, setHasAdminSessionToken] = useState(() => hasAdminToken())
-
-  useEffect(() => {
-    const sync = () => setHasAdminSessionToken(hasAdminToken())
-    window.addEventListener('gf-admin-session-changed', sync)
-    return () => window.removeEventListener('gf-admin-session-changed', sync)
-  }, [])
 
   const navigation = [
     { name: 'Home', path: '/' },
-    {
-      name: 'Our Companies',
-      path: '#',
-      dropdown: companies
-    },
     { name: 'About Us', path: '/about' },
     { name: 'Our Services', path: '/services' },
     { name: 'Blog', path: '/blog' },
     { name: 'Contact', path: '/contact' },
-    ...(isAuthenticated && user ? [{
-      name: 'Projects & Activities',
-      path: user?.admin_level || user?.developer_level ? '/admin' : '/projects'
-    }] : []),
-  ]
-
-  const clientPortalNav = [
-    { name: 'Dashboard', path: '/client-portal' },
-    { name: 'Projects & Activities', path: '/projects' },
-    { name: 'Pricing', path: '/pricing' },
+    {
+      name: 'Our Companies',
+      path: '#',
+      dropdown: companies,
+    },
+    ...(isAuthenticated ? [
+      {
+        name: 'Projects & Activities',
+        path: '/projects',
+      },
+    ] : []),
   ]
 
   const isActive = (path) => location.pathname === path
@@ -59,30 +37,13 @@ const Navbar = () => {
     navigate('/')
   }
 
-  const handleAdminLoginSuccess = () => {
-    console.log('[NAVBAR] Admin login success! Navigating to /admin...')
-    setAdminLoginModalOpen(false)
-    navigate('/admin')
-  }
-
-  const openAdminFromDirect = () => {
-    // Silently block regular users from accessing admin
-    if (isAuthenticated) return
-
-    if (hasAdminSessionToken) {
-      navigate('/admin')
-    } else {
-      setAdminLoginModalOpen(true)
-    }
-  }
-
   return (
     <>
       <nav className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto pl-0 pr-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[160px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between h-[160px] gap-6">
             {/* Brand Header with Logo */}
-            <div className="flex items-center flex-shrink-0" style={{ marginLeft: '-16px' }}>
+            <div className="flex items-center flex-shrink-0 min-w-[220px]" style={{ marginLeft: '-16px' }}>
               <img
                 src="/brand-header.png/sja.PNG"
                 alt="SJA"
@@ -103,13 +64,13 @@ const Navbar = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-start space-x-2 flex-nowrap overflow-visible">
+            <div className="hidden md:flex flex-1 flex-wrap items-center justify-center gap-6 overflow-visible">
               {navigation.map((item, index) => (
-                <div key={item.path} className="relative group whitespace-nowrap flex items-start">
+                <div key={item.path} className="relative group whitespace-nowrap">
                   {item.dropdown ? (
                     <>
                       <button
-                        className="flex items-center text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors duration-200 px-1 py-1"
+                        className="flex items-center text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors duration-200 px-1 py-1 min-h-[40px]"
                         onClick={() => setCompaniesDropdownOpen(!companiesDropdownOpen)}
                       >
                         {item.name}
@@ -136,7 +97,7 @@ const Navbar = () => {
                       </div>
                     </>
                   ) : (
-                    <div className={item.name === 'Home' ? 'flex flex-col items-start' : 'flex items-center'}>
+                    <div className={item.name === 'Home' ? 'flex flex-col items-center min-h-[40px]' : 'flex items-center min-h-[40px]'}>
                       <Link
                         to={item.path}
                         className={`text-sm font-medium transition-colors duration-200 px-1 py-1 ${
@@ -149,7 +110,7 @@ const Navbar = () => {
                       </Link>
                       {/* Show Login/Logout button directly under Home link */}
                       {item.name === 'Home' && (
-                        <div className="mt-1">
+                        <div className="mt-2">
                           {isAuthenticated ? (
                             <button
                               onClick={handleLogout}
@@ -174,44 +135,28 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* User Profile Display */}
             <div className="flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
               {isAuthenticated && user ? (
                 <>
-                  {profilePhotoUrl ? (
+                  {user.profile_photo_blob ? (
                     <img
-                      src={profilePhotoUrl}
-                      alt={user.display_name || user.name || `${user.first_name} ${user.last_name}`}
-                      className="h-8 w-8 rounded-full object-cover border border-gray-300"
+                      src={user.profile_photo_blob}
+                      alt={user.display_name || ''}
+                      className="h-8 w-8 rounded-full object-cover"
                     />
-                  ) : user?.profile_photo || user?.profilePhoto ? (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium border border-gray-300">
-                      <User className="w-4 h-4" />
-                    </div>
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium border border-gray-300">
-                      {user.first_name && user.last_name
-                        ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-                        : user.first_name
-                        ? user.first_name[0].toUpperCase()
-                        : user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                        : 'U'
-                      }
+                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
+                      {user.first_name?.[0]}{user.last_name?.[0]}
                     </div>
                   )}
                   <div className="text-sm font-medium text-gray-700">
-                    {user.display_name || user.name || `${user.first_name} ${user.last_name}` || 'User'}
+                    {user.display_name || ''}
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
-                    JL
-                  </div>
-                  <div className="text-sm font-medium text-gray-700">
-                    John Lee
-                  </div>
-                </>
+                <div className="text-sm font-medium text-gray-700">
+                  Guest
+                </div>
               )}
             </div>
             <button
@@ -229,44 +174,28 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden pb-4">
-            {/* Mobile User Profile Display */}
             <div className="flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200 mb-4">
               {isAuthenticated && user ? (
                 <>
-                  {profilePhotoUrl ? (
+                  {user.profile_photo_blob ? (
                     <img
-                      src={profilePhotoUrl}
-                      alt={user.display_name || user.name || `${user.first_name} ${user.last_name}`}
-                      className="h-8 w-8 rounded-full object-cover border border-gray-300"
+                      src={user.profile_photo_blob}
+                      alt={user.display_name || ''}
+                      className="h-8 w-8 rounded-full object-cover"
                     />
-                  ) : user?.profile_photo || user?.profilePhoto ? (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium border border-gray-300">
-                      <User className="w-4 h-4" />
-                    </div>
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium border border-gray-300">
-                      {user.first_name && user.last_name
-                        ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-                        : user.first_name
-                        ? user.first_name[0].toUpperCase()
-                        : user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                        : 'U'
-                      }
+                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
+                      {user.first_name?.[0]}{user.last_name?.[0]}
                     </div>
                   )}
                   <div className="text-sm font-medium text-gray-700">
-                    {user.display_name || user.name || `${user.first_name} ${user.last_name}` || 'User'}
+                    {user.display_name || ''}
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
-                    JL
-                  </div>
-                  <div className="text-sm font-medium text-gray-700">
-                    John Lee
-                  </div>
-                </>
+                <div className="text-sm font-medium text-gray-700">
+                  Guest
+                </div>
               )}
             </div>
             <div className="flex flex-col space-y-2">
@@ -314,43 +243,10 @@ const Navbar = () => {
                  )
                ))}
 
-                {/* Admin + account shortcuts in mobile drawer */}
-                <div className="border-t border-gray-200 pt-2 mt-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Admin
-                  </div>
-                  <button
-                    onClick={() => {
-                      // Silently block regular users from accessing admin
-                      if (isAuthenticated) return
-
-                      if (hasAdminSessionToken) {
-                        navigate('/admin');
-                        setIsOpen(false);
-                      } else {
-                        setAdminLoginModalOpen(true);
-                        setIsOpen(false);
-                      }
-                    }}
-                    className={`block w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                      hasAdminSessionToken && isActive('/admin')
-                        ? 'bg-purple-50 text-purple-600'
-                        : 'text-purple-700 hover:bg-purple-100'
-                    }`}
-                  >
-                    Admin Panel
-                  </button>
-                </div>
             </div>
           </div>
         )}
       </nav>
-
-      <AuthPlatformModal
-        isOpen={adminLoginModalOpen}
-        onClose={() => setAdminLoginModalOpen(false)}
-        onAdminSuccess={handleAdminLoginSuccess}
-      />
     </>
   )
 }
@@ -380,3 +276,4 @@ function MobileDropdown({ item, closeMenu }){
 }
 
 export default Navbar
+

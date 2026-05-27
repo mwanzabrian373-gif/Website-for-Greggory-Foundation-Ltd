@@ -1,51 +1,11 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Users, FolderKanban, ClipboardList, Settings, Briefcase, BarChart3, FileText, MessageSquare, HelpCircle, ShieldCheck, Code2, Home, Info, BookOpen, Calculator, Building2, CheckSquare, TrendingUp, Search } from "lucide-react";
+import { LogOut, Users, FolderKanban, ClipboardList, Settings, Briefcase, BarChart3, FileText, MessageSquare, HelpCircle, ShieldCheck, Code2, Home, Info, BookOpen, Calculator, Building2, CheckSquare, TrendingUp, Search, Link as LinkIcon } from "lucide-react";
 import { API_BASE_URL } from "../../services/api";
-import { UsersModal } from "./modals/UsersModal";
-import { ProjectsModal } from "./modals/ProjectsModal";
-import { ApplicationsModal } from "./modals/ApplicationsModal";
-import { SettingsModal } from "./modals/SettingsModal";
-import { ContentModal } from "./modals/ContentModal";
-import { AnalyticsModal } from "./modals/AnalyticsModal";
-import { ReportsModal } from "./modals/ReportsModal";
-import { CommunicationModal } from "./modals/CommunicationModal";
-import { SupportModal } from "./modals/SupportModal";
-import { SecurityModal } from "./modals/SecurityModal";
-import { FinancialModal } from "./modals/FinancialModal";
-import { CRMModal } from "./modals/CRMModal";
-import { TasksModal } from "./modals/TasksModal";
-import { DeveloperModal } from "./modals/DeveloperModal";
 
 function AdminLayout({ user, children }) {
   const navigate = useNavigate();
   const [profilePhotoData, setProfilePhotoData] = useState(user?.profilePhotoData || user?.profile_photo_blob || null);
-  
-  // Modal state management
-  const [modals, setModals] = useState({
-    users: false,
-    projects: false,
-    applications: false,
-    settings: false,
-    content: false,
-    analytics: false,
-    reports: false,
-    communication: false,
-    support: false,
-    security: false,
-    financial: false,
-    crm: false,
-    tasks: false,
-    developer: false,
-  });
-
-  const openModal = (modalName) => {
-    setModals(prev => ({ ...prev, [modalName]: true }));
-  };
-
-  const closeModal = (modalName) => {
-    setModals(prev => ({ ...prev, [modalName]: false }));
-  };
 
   const displayName =
     user?.display_name ||
@@ -145,90 +105,79 @@ function AdminLayout({ user, children }) {
       </div>
 
       {/* Modals */}
-      <UsersModal isOpen={modals.users} onClose={() => closeModal('users')} />
-      <ProjectsModal isOpen={modals.projects} onClose={() => closeModal('projects')} />
-      <ApplicationsModal isOpen={modals.applications} onClose={() => closeModal('applications')} />
-      <SettingsModal isOpen={modals.settings} onClose={() => closeModal('settings')} />
-      <ContentModal isOpen={modals.content} onClose={() => closeModal('content')} />
-      <AnalyticsModal isOpen={modals.analytics} onClose={() => closeModal('analytics')} />
-      <ReportsModal isOpen={modals.reports} onClose={() => closeModal('reports')} />
-      <CommunicationModal isOpen={modals.communication} onClose={() => closeModal('communication')} />
-      <SupportModal isOpen={modals.support} onClose={() => closeModal('support')} />
-      <SecurityModal isOpen={modals.security} onClose={() => closeModal('security')} />
-      <FinancialModal isOpen={modals.financial} onClose={() => closeModal('financial')} />
-      <CRMModal isOpen={modals.crm} onClose={() => closeModal('crm')} />
-      <TasksModal isOpen={modals.tasks} onClose={() => closeModal('tasks')} />
-      <DeveloperModal isOpen={modals.developer} onClose={() => closeModal('developer')} />
-
       {/* Horizontal Scrollable Quick Links */}
       <div className="bg-blue-900 border-b border-blue-800 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 py-3 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-blue-900">
-            <button onClick={() => openModal('users')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/users')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Users className="h-4 w-4" />
               Manage Users
             </button>
-            <button onClick={() => openModal('projects')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/projects')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <FolderKanban className="h-4 w-4" />
               Projects
             </button>
-            <button onClick={() => openModal('applications')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/applications')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <ClipboardList className="h-4 w-4" />
               Applications
             </button>
-            <button onClick={() => openModal('settings')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/settings')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Settings className="h-4 w-4" />
               Settings
             </button>
-            <button onClick={() => openModal('content')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/quick-links')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+              <LinkIcon className="h-4 w-4" />
+              Quick Links
+            </button>
+            <button onClick={() => navigate('/admin/content')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Briefcase className="h-4 w-4" />
               Content
             </button>
-            <button onClick={() => openModal('analytics')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/analytics')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <BarChart3 className="h-4 w-4" />
               Analytics
             </button>
-            <button onClick={() => openModal('reports')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/reports')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <FileText className="h-4 w-4" />
               Reports
             </button>
-            <button onClick={() => openModal('communication')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/communication')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <MessageSquare className="h-4 w-4" />
               Communication
             </button>
-            <button onClick={() => openModal('support')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/support')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <HelpCircle className="h-4 w-4" />
               Support
             </button>
-            <button onClick={() => openModal('security')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/security')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <ShieldCheck className="h-4 w-4" />
               Security
             </button>
-            <button onClick={() => openModal('financial')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/financial')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Calculator className="h-4 w-4" />
               Financial
             </button>
-            <button onClick={() => openModal('crm')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/crm')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Building2 className="h-4 w-4" />
               CRM
             </button>
-            <button onClick={() => openModal('tasks')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/tasks')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <CheckSquare className="h-4 w-4" />
               Tasks
             </button>
-            <button onClick={() => openModal('developer')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin/developer')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Code2 className="h-4 w-4" />
               Developer
             </button>
-            <button onClick={() => navigate('/admin/home')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Home className="h-4 w-4" />
               Home
             </button>
-            <button onClick={() => navigate('/admin/about')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <Info className="h-4 w-4" />
               About
             </button>
-            <button onClick={() => navigate('/admin/blog')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
+            <button onClick={() => navigate('/admin')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium whitespace-nowrap transition-all">
               <BookOpen className="h-4 w-4" />
               Blog
             </button>

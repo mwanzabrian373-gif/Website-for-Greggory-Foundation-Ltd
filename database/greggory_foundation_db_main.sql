@@ -2202,6 +2202,101 @@ CREATE TABLE IF NOT EXISTS notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
+-- Table: admin_announcements
+-- Admin announcements and public notices
+-- =============================================
+CREATE TABLE IF NOT EXISTS admin_announcements (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE,
+    summary TEXT,
+    content LONGTEXT,
+    announcement_type ENUM('general', 'system', 'project', 'team', 'client', 'urgent', 'reminder') DEFAULT 'general',
+    audience ENUM('all_users', 'all_clients', 'all_admins', 'project_team', 'specific_users', 'specific_projects', 'public') DEFAULT 'all_users',
+    target_project_id BIGINT DEFAULT NULL,
+    target_user_id BIGINT DEFAULT NULL,
+    status ENUM('draft', 'published', 'archived') DEFAULT 'draft',
+    is_pinned BOOLEAN DEFAULT FALSE,
+    published_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NULL,
+    created_by BIGINT DEFAULT NULL,
+    updated_by BIGINT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_by BIGINT DEFAULT NULL,
+    INDEX idx_announcements_status (status),
+    INDEX idx_announcements_type (announcement_type),
+    INDEX idx_announcements_audience (audience),
+    INDEX idx_announcements_project (target_project_id),
+    INDEX idx_announcements_user (target_user_id),
+    FOREIGN KEY (target_project_id) REFERENCES user_projects(id) ON DELETE SET NULL,
+    FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- Table: project_updates
+-- Project-specific update feed entries for admin and client portals
+-- =============================================
+CREATE TABLE IF NOT EXISTS project_updates (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body LONGTEXT NOT NULL,
+    update_type ENUM('status', 'milestone', 'issue', 'release', 'task', 'announcement', 'general') DEFAULT 'status',
+    visibility ENUM('team', 'client', 'public', 'private') DEFAULT 'team',
+    author_id BIGINT DEFAULT NULL,
+    author_role ENUM('admin', 'developer', 'client', 'system') DEFAULT 'admin',
+    related_task_id BIGINT DEFAULT NULL,
+    progress_percentage DECIMAL(5,2) DEFAULT NULL,
+    status ENUM('draft', 'published', 'archived') DEFAULT 'published',
+    published_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_by BIGINT DEFAULT NULL,
+    INDEX idx_project_updates_project (project_id),
+    INDEX idx_project_updates_type (update_type),
+    INDEX idx_project_updates_visibility (visibility),
+    INDEX idx_project_updates_status (status),
+    INDEX idx_project_updates_author (author_id),
+    FOREIGN KEY (project_id) REFERENCES user_projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (related_task_id) REFERENCES project_tasks(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- Table: user_portal_feed_items
+-- Personalized feed items for the user portal
+-- =============================================
+CREATE TABLE IF NOT EXISTS user_portal_feed_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    source_type ENUM('announcement', 'project_update', 'notification', 'system') DEFAULT 'project_update',
+    source_id BIGINT DEFAULT NULL,
+    title VARCHAR(255) NOT NULL,
+    body LONGTEXT,
+    related_project_id BIGINT DEFAULT NULL,
+    action_url VARCHAR(512),
+    is_read BOOLEAN DEFAULT FALSE,
+    priority ENUM('low', 'normal', 'high', 'urgent') DEFAULT 'normal',
+    status ENUM('active', 'archived') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_by BIGINT DEFAULT NULL,
+    INDEX idx_portal_feed_user (user_id),
+    INDEX idx_portal_feed_project (related_project_id),
+    INDEX idx_portal_feed_source (source_type),
+    INDEX idx_portal_feed_status (status),
+    INDEX idx_portal_feed_read (is_read),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (related_project_id) REFERENCES user_projects(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
 -- Table: change_requests
 -- Change order management
 -- =============================================
@@ -2231,6 +2326,30 @@ CREATE TABLE IF NOT EXISTS change_requests (
     FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewed_by) REFERENCES admin_users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =============================================
+-- Table: quick_links
+-- =============================================
+CREATE TABLE IF NOT EXISTS quick_links (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    url VARCHAR(512) NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_quick_links_order (display_order),
+    INDEX idx_quick_links_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default quick links
+INSERT INTO quick_links (title, url, display_order, is_active) VALUES
+('Home', '/', 1, TRUE),
+('About Us', '/about', 2, TRUE),
+('Our Services', '/services', 3, TRUE),
+('Case Studies', '/case-studies', 4, TRUE),
+('Blog', '/blog', 5, TRUE);
 
 -- =====================================================
 -- SUCCESS MESSAGE

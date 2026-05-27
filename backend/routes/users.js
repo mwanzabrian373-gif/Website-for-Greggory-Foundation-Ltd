@@ -547,6 +547,26 @@ router.get('/client-dashboard/:id', async (req, res) => {
       [id]
     );
 
+    const [portalFeedItems] = await db.promise().query(
+      `SELECT id, source_type, title, body, related_project_id, action_url, priority, status, created_at
+       FROM user_portal_feed_items
+       WHERE user_id = ? AND status = 'active' AND deleted_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 8`,
+      [id]
+    );
+
+    const feedItems = portalFeedItems.map((item) => ({
+      id: item.id,
+      type: item.source_type || 'update',
+      title: item.title || 'Update available',
+      description: item.body || '',
+      projectId: item.related_project_id,
+      actionUrl: item.action_url,
+      priority: item.priority || 'normal',
+      createdAt: item.created_at,
+    }));
+
     const projectMap = projects.reduce((map, project) => {
       map[project.id] = project;
       return map;
@@ -674,18 +694,10 @@ router.get('/client-dashboard/:id', async (req, res) => {
         { id: 2, label: 'Client Satisfaction', value: satisfaction, trend: 'up' },
         { id: 3, label: 'Budget Variance', value: budgetVariancePercent, trend: budgetVariance <= 0 ? 'up' : 'down' }
       ],
-      roleUpdates: {
-        admin: [
-          { title: 'Project Oversight', description: 'Admin approves project milestones, budget changes, and scope decisions for greater control.' },
-          { title: 'Invoice & Payment Control', description: 'Admin manages billing, invoice review, and payment workflows for on-time collection.' },
-          { title: 'Risk & Compliance', description: 'Admin monitors risk, approvals, and resource alignment across all active engagements.' }
-        ],
-        developer: [
-          { title: 'Task Delivery', description: 'Developers update task status, document progress, and manage technical delivery milestones.' },
-          { title: 'Quality Assurance', description: 'Developer teams log code reviews, QA checks, and delivery readiness in real time.' },
-          { title: 'Release Updates', description: 'Developers communicate completion status and next-step handoffs directly through the portal.' }
-        ]
-      },
+      feedItems: feedItems.length > 0 ? feedItems : [
+        { id: 'fallback-admin', type: 'announcement', title: 'Admin oversight ready', description: 'Your portal feed is active and will show approvals, project updates, and alerts here.' },
+        { id: 'fallback-dev', type: 'project_update', title: 'Delivery status synced', description: 'Project status updates, task changes, and team notifications appear in your feed automatically.' }
+      ],
       summary: {
         totalProjects: clientSummary?.total_projects ?? parsedProjects.length,
         activeProjects: clientSummary?.active_projects ?? parsedProjects.filter((p) => p.status !== 'completed').length,

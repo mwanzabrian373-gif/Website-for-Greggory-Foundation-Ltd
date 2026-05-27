@@ -482,6 +482,14 @@ router.get('/dashboard', async (req, res) => {
       'SELECT COUNT(*) as count FROM users WHERE is_active = 1 AND deleted_at IS NULL'
     );
 
+    const [activeProjectsCount] = await db.promise().query(
+      "SELECT COUNT(*) as count FROM client_projects WHERE deleted_at IS NULL AND status != 'completed'"
+    );
+
+    const [pendingApprovalsCount] = await db.promise().query(
+      "SELECT COUNT(*) as count FROM client_projects WHERE deleted_at IS NULL AND status = 'pending'"
+    );
+
     // Get recent activity
     const [recentActivity] = await db.promise().query(`
       (SELECT 
@@ -526,6 +534,8 @@ router.get('/dashboard', async (req, res) => {
           users: userCount[0].count,
           total: adminCount[0].count + developerCount[0].count + userCount[0].count
         },
+        activeProjects: activeProjectsCount[0].count,
+        pendingApprovalsCount: pendingApprovalsCount[0].count,
         recentActivity: recentActivity,
         timestamp: new Date().toISOString()
       }
@@ -1105,6 +1115,451 @@ router.get('/project-timeline', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch project timeline',
+      error: error.message
+    });
+  }
+});
+
+const slugify = (text) => text
+  .toString()
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9\s-]/g, '')
+  .replace(/\s+/g, '-')
+  .replace(/-+/g, '-');
+
+router.get('/announcements', async (req, res) => {
+  try {
+    const [announcements] = await db.promise().query(`
+      SELECT id, title, summary, content, announcement_type, audience, priority, status, published_at, created_at
+      FROM admin_announcements
+      WHERE deleted_at IS NULL
+      ORDER BY published_at DESC, created_at DESC
+      LIMIT 50
+    `);
+
+    res.json({
+      success: true,
+      announcements: announcements.map((announcement) => ({
+        ...announcement,
+        date: announcement.published_at ? announcement.published_at.toISOString().slice(0, 10) : announcement.created_at.toISOString().slice(0, 10),
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching admin announcements:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch announcements', error: error.message });
+  }
+});
+
+router.post('/announcements', async (req, res) => {
+  try {
+    const { title, content, priority = 'normal', audience = 'all_users', announcement_type = 'general', status = 'draft', published_at = null, created_by = null } = req.body;
+
+    if (!title || !content) {
+      return res.status(400).json({ success: false, message: 'Title and content are required.' });
+    }
+
+    const slug = slugify(title);
+    const [result] = await db.promise().query(
+      `INSERT INTO admin_announcements (title, slug, summary, content, announcement_type, audience, priority, status, published_at, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        title,
+        slug,
+        content.substring(0, 255),
+        content,
+        announcement_type,
+        audience,
+        priority,
+        status,
+        published_at,
+        created_by,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Announcement created successfully',
+      announcementId: result.insertId,
+    });
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    res.status(500).json({ success: false, message: 'Failed to create announcement', error: error.message });
+  }
+});
+
+router.get('/project-updates', async (req, res) => {
+  try {
+    const [updates] = await db.promise().query(`
+      SELECT id, project_id, title, body, update_type, visibility, author_id, author_role, progress_percentage, status, published_at, created_at
+      FROM project_updates
+      WHERE deleted_at IS NULL
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+
+    res.json({ success: true, updates });
+  } catch (error) {
+    console.error('Error fetching project updates:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch project updates', error: error.message });
+  }
+});
+
+router.post('/project-updates', async (req, res) => {
+  try {
+    const { project_id, title, body, update_type = 'general', visibility = 'team', author_id = null, author_role = 'admin', related_task_id = null, progress_percentage = null, status = 'published', published_at = null } = req.body;
+
+    if (!project_id || !title || !body) {
+      return res.status(400).json({ success: false, message: 'Project, title, and body are required.' });
+    }
+
+    const [result] = await db.promise().query(
+      `INSERT INTO project_updates (project_id, title, body, update_type, visibility, author_id, author_role, related_task_id, progress_percentage, status, published_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [project_id, title, body, update_type, visibility, author_id, author_role, related_task_id, progress_percentage, status, published_at]
+    );
+
+    res.status(201).json({ success: true, message: 'Project update created successfully', updateId: result.insertId });
+  } catch (error) {
+    console.error('Error creating project update:', error);
+    res.status(500).json({ success: false, message: 'Failed to create project update', error: error.message });
+  }
+});
+
+router.post('/portal-feed', async (req, res) => {
+  try {
+    const { user_id, title, body, source_type = 'system', source_id = null, related_project_id = null, action_url = null, priority = 'normal', status = 'active' } = req.body;
+
+    if (!user_id || !title) {
+      return res.status(400).json({ success: false, message: 'User ID and title are required.' });
+    }
+
+    const [result] = await db.promise().query(
+      `INSERT INTO user_portal_feed_items (user_id, source_type, source_id, title, body, related_project_id, action_url, priority, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [user_id, source_type, source_id, title, body, related_project_id, action_url, priority, status]
+    );
+
+    res.status(201).json({ success: true, message: 'Portal feed item created successfully', feedItemId: result.insertId });
+  } catch (error) {
+    console.error('Error creating portal feed item:', error);
+    res.status(500).json({ success: false, message: 'Failed to create portal feed item', error: error.message });
+  }
+});
+
+// =============================================
+// GET USER BY ID (Single user from any table)
+// =============================================
+router.get('/user/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role_type } = req.query;
+
+    let query;
+    let params;
+
+    if (role_type === 'admin') {
+      query = `SELECT * FROM admin_users WHERE id = ?`;
+      params = [id];
+    } else if (role_type === 'developer') {
+      query = `SELECT * FROM developer_users WHERE id = ?`;
+      params = [id];
+    } else {
+      query = `SELECT u.*, tm.name as job_title, tm.role as job_role FROM users u LEFT JOIN team_members tm ON u.job_id = tm.id WHERE u.id = ?`;
+      params = [id];
+    }
+
+    const [users] = await db.promise().query(query, params);
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: users[0]
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// UPDATE USER (General update for any user type)
+// =============================================
+router.put('/user/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role_type, ...updateData } = req.body;
+
+    if (!role_type) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role type is required'
+      });
+    }
+
+    let table;
+    if (role_type === 'admin') {
+      table = 'admin_users';
+    } else if (role_type === 'developer') {
+      table = 'developer_users';
+    } else {
+      table = 'users';
+    }
+
+    // Remove sensitive fields that shouldn't be updated directly
+    delete updateData.password_hash;
+    delete updateData.created_at;
+    delete updateData.id;
+
+    // Build dynamic update query
+    const fields = Object.keys(updateData);
+    const values = Object.values(updateData);
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+
+    const [result] = await db.promise().query(
+      `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE id = ?`,
+      [...values, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update user',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// DELETE USER
+// =============================================
+router.delete('/user/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role_type } = req.query;
+
+    if (!role_type) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role type is required'
+      });
+    }
+
+    let table;
+    if (role_type === 'admin') {
+      table = 'admin_users';
+    } else if (role_type === 'developer') {
+      table = 'developer_users';
+    } else {
+      table = 'users';
+    }
+
+    const [result] = await db.promise().query(
+      `UPDATE ${table} SET deleted_at = NOW() WHERE id = ?`,
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// GET USER ACTIVITY LOGS
+// =============================================
+router.get('/user/:id/activity', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 50 } = req.query;
+
+    const [logs] = await db.promise().query(`
+      SELECT * FROM admin_activity_logs
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT ?
+    `, [id, parseInt(limit)]);
+
+    res.json({
+      success: true,
+      logs,
+      count: logs.length
+    });
+  } catch (error) {
+    console.error('Error fetching user activity:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user activity',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// DASHBOARD ANALYTICS ENDPOINTS
+// =============================================
+router.get('/dashboard', async (req, res) => {
+  try {
+    // Get user counts
+    const [userCounts] = await db.promise().query(`
+      SELECT
+        (SELECT COUNT(*) FROM users WHERE is_active = TRUE AND deleted_at IS NULL) as regular_users,
+        (SELECT COUNT(*) FROM admin_users WHERE is_active = TRUE AND deleted_at IS NULL) as admin_users,
+        (SELECT COUNT(*) FROM developer_users WHERE is_active = TRUE AND deleted_at IS NULL) as developer_users
+    `);
+
+    // Get active projects
+    const [projectCounts] = await db.promise().query(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'planning' THEN 1 ELSE 0 END) as planning
+      FROM projects
+      WHERE deleted_at IS NULL
+    `);
+
+    // Get recent activity
+    const [recentActivity] = await db.promise().query(`
+      SELECT 
+        id,
+        action_type,
+        entity_type,
+        entity_id,
+        description,
+        user_id,
+        created_at
+      FROM admin_activity_logs
+      ORDER BY created_at DESC
+      LIMIT 10
+    `);
+
+    // Get pending approvals
+    const [pendingApprovals] = await db.promise().query(`
+      SELECT COUNT(*) as count
+      FROM projects
+      WHERE status = 'pending_approval' AND deleted_at IS NULL
+    `);
+
+    res.json({
+      success: true,
+      dashboard: {
+        userCounts: {
+          total: userCounts[0].regular_users + userCounts[0].admin_users + userCounts[0].developer_users,
+          regular: userCounts[0].regular_users,
+          admin: userCounts[0].admin_users,
+          developer: userCounts[0].developer_users
+        },
+        activeProjects: projectCounts[0].in_progress,
+        totalProjects: projectCounts[0].total,
+        completedProjects: projectCounts[0].completed,
+        recentActivity,
+        pendingApprovalsCount: pendingApprovals[0].count
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard data',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// BUDGET OVERVIEW ENDPOINT
+// =============================================
+router.get('/budget-overview', async (req, res) => {
+  try {
+    const [budgetData] = await db.promise().query(`
+      SELECT
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as spent,
+        COALESCE(SUM(CASE WHEN type = 'budget' THEN amount ELSE 0 END), 0) as planned,
+        COALESCE(SUM(CASE WHEN type = 'forecast' THEN amount ELSE 0 END), 0) as forecast
+      FROM project_budgets
+      WHERE deleted_at IS NULL
+    `);
+
+    res.json({
+      success: true,
+      data: budgetData[0] || { spent: 0, planned: 0, forecast: 0 }
+    });
+  } catch (error) {
+    console.error('Error fetching budget overview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch budget overview',
+      error: error.message
+    });
+  }
+});
+
+// =============================================
+// PENDING APPROVALS ENDPOINT
+// =============================================
+router.get('/pending-approvals', async (req, res) => {
+  try {
+    const [approvals] = await db.promise().query(`
+      SELECT
+        p.id,
+        p.project_name,
+        p.status,
+        p.created_at,
+        u.display_name as created_by
+      FROM projects p
+      LEFT JOIN users u ON p.created_by = u.id
+      WHERE p.status = 'pending_approval' AND p.deleted_at IS NULL
+      ORDER BY p.created_at DESC
+      LIMIT 20
+    `);
+
+    res.json({
+      success: true,
+      data: approvals
+    });
+  } catch (error) {
+    console.error('Error fetching pending approvals:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending approvals',
       error: error.message
     });
   }

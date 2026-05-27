@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { AdvancedDashboard } from './pages/AdvancedDashboard';
 import { Users } from './pages/Users';
 import { Content } from './pages/Content';
+import { QuickLinks } from './pages/QuickLinks';
 import { Projects } from './pages/Projects';
 import { Applications } from './pages/Applications';
 import { Developer } from './pages/Developer';
@@ -147,8 +148,23 @@ export function AdminRouter() {
                     >
                       <Content user={user} />
                     </AdminRoute>
-                  } 
+                  }
                 />
+
+                {/* Quick Links Management - Admins have full access */}
+                <Route
+                  path="quick-links"
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <QuickLinks user={user} />
+                    </AdminRoute>
+                  }
+                />
+
 
                 {/* Projects - Admins and developers have access */}
                 <Route 
