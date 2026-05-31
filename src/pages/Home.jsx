@@ -34,7 +34,7 @@ const Home = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white py-24 sm:py-28 md:py-36 min-h-[calc(100vh-120px)] md:min-h-[calc(100vh-180px)]">
+      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white py-24 sm:py-28 md:py-36 min-h-[calc(100vh-80px)] md:min-h-[calc(100vh-80px)]">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIi8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         
         {/* Background Image covering entire hero area */}
@@ -54,7 +54,7 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link to="/services" className="btn-primary bg-teal-600 hover:bg-teal-700 justify-center sm:justify-start text-sm sm:text-base py-3 px-6">
                 Our Services
-                <ArrowRight size={16} className="sm:size-20" />
+                <ArrowRight size={16} size={16} />
               </Link>
               <Link to="/contact" className="btn-secondary bg-transparent border-white text-white hover:bg-white hover:text-navy-900 justify-center sm:justify-start text-sm sm:text-base py-3 px-6">
                 Contact Us Today
@@ -81,7 +81,7 @@ const Home = () => {
                 controls
                 poster="/brand-header.png/sja.PNG"
               >
-                <source src="/brand-header.png/suti4.PNG" type="video/mp4" />
+                
                 Your browser does not support the video tag.
               </video>
             </div>
@@ -126,7 +126,7 @@ const Home = () => {
                 <p className="text-sm sm:text-base text-gray-600 mb-6">{service.description}</p>
                 <Link to={service.link} className="text-teal-600 font-semibold hover:text-teal-700 inline-flex items-center gap-2">
                   Learn More
-                  <ArrowRight size={14} className="sm:size-16" />
+                  <ArrowRight size={14} size={14} />
                 </Link>
               </div>
             ))}
@@ -178,7 +178,7 @@ const Home = () => {
           </p>
           <Link to="/contact" className="btn-primary bg-teal-600 hover:bg-teal-700 inline-flex text-sm sm:text-base py-3 px-6">
             Get in Touch
-            <ArrowRight size={16} className="sm:size-20" />
+            <ArrowRight size={16} size={16} />
           </Link>
         </div>
       </section>

@@ -23,8 +23,14 @@ export function Modal({
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
-    full: 'max-w-6xl'
+    full: 'w-full h-screen max-w-none'
   };
+
+  const isFull = size === 'full';
+
+  const contentClasses = isFull
+    ? 'absolute inset-0 w-full h-full bg-white/95 backdrop-blur-xl shadow-2xl border border-white/20 animate-in duration-200 overflow-hidden'
+    : `relative w-full ${sizeClasses[size]} bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 max-h-[calc(100vh-2rem)] overflow-hidden`;
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -54,7 +60,7 @@ export function Modal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={isFull ? 'fixed inset-0 z-50' : 'fixed inset-0 z-50 flex items-center justify-center p-4'}
       onClick={handleBackdropClick}
     >
       {/* Backdrop */}
@@ -63,7 +69,7 @@ export function Modal({
       {/* Modal Content */}
       <div 
         ref={modalRef}
-        className={`relative w-full ${sizeClasses[size]} bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200`}
+        className={contentClasses}
       >
         {/* Header */}
         {title && (
@@ -81,7 +87,7 @@ export function Modal({
         )}
         
         {/* Body */}
-        <div className="p-6">
+        <div className={`p-6 overflow-y-auto ${isFull ? 'h-full' : 'h-full'}`}>
           {children}
         </div>
       </div>

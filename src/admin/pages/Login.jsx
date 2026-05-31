@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle, Camera, User } from "lucide-react";
 import { API_BASE_URL } from "../../services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
@@ -11,11 +11,22 @@ export function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [profilePreview, setProfilePreview] = useState(null);
+  const [profileFile, setProfileFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginRole, setLoginRole] = useState("admin"); // 'admin' or 'developer'
 
   const from = location.state?.from?.pathname || "/admin";
+
+  const handleProfileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setProfileFile(file)
+    const previewUrl = URL.createObjectURL(file)
+    setProfilePreview(previewUrl)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,6 +52,38 @@ export function Login({ onLoginSuccess }) {
 
       if (!response.ok) {
         throw new Error(data.message || "Authentication failed");
+      }
+
+      // Handle profile photo upload if selected
+      if (profileFile && data.user?.id) {
+        try {
+          const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(profileFile);
+          });
+
+          const photoResponse = await fetch(
+            `${API_URL}/admin-verification/profile/${data.user.id}/photo`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                dataBase64: base64Data.split(",")[1],
+                contentType: profileFile.type,
+                fileName: profileFile.name,
+              }),
+            },
+          );
+
+          if (photoResponse.ok) {
+            console.log("[LOGIN] Profile photo uploaded successfully");
+          }
+        } catch (photoError) {
+          console.error("[LOGIN] Photo upload failed:", photoError);
+          // Don't fail login if photo upload fails
+        }
       }
 
       // Store session
@@ -101,6 +144,36 @@ export function Login({ onLoginSuccess }) {
           onSubmit={handleSubmit}
           className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl"
         >
+          {/* Profile Photo Upload */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                {profilePreview ? (
+                  <img src={profilePreview} alt="Profile preview" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-12 h-12 text-slate-400" />
+                )}
+              </div>
+              <label
+                htmlFor="profilePhoto"
+                className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-blue-600 border-2 border-slate-800 flex items-center justify-center text-white text-sm cursor-pointer shadow-md hover:bg-blue-700"
+                title="Add profile photo"
+              >
+                <Camera className="w-4 h-4" />
+              </label>
+              <input
+                id="profilePhoto"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleProfileChange}
+              />
+            </div>
+            <p className="mt-2 text-xs text-gray-400 text-center max-w-xs">
+              Optional: add a profile photo now.
+            </p>
+          </div>
+
           {/* Role Selector */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-300 mb-2">

@@ -2,24 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AdminRoute } from './components/AdminRoute';
 import AdminLayout from './components/AdminLayout';
-import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { AdvancedDashboard } from './pages/AdvancedDashboard';
-import { Users } from './pages/Users';
-import { Content } from './pages/Content';
-import { QuickLinks } from './pages/QuickLinks';
-import { Projects } from './pages/Projects';
-import { Applications } from './pages/Applications';
-import { Developer } from './pages/Developer';
-import { ActivityLogs } from './pages/Activity';
-import { Settings } from './pages/Settings';
-import { CRM } from './pages/CRM';
-import { Tasks } from './pages/Tasks';
-import { Communication } from './pages/Communication';
-import { Support } from './pages/Support';
-import { Security } from './pages/Security';
-import { Reports } from './pages/Reports';
-import { Financial } from './pages/Financial';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import AdvancedDashboard from './pages/AdvancedDashboard';
+import Users from './pages/Users';
+import Content from './pages/Content';
+import QuickLinks from './pages/QuickLinks';
+import Projects from './pages/Projects';
+import Applications from './pages/Applications';
+import Developer from './pages/Developer';
+import ActivityLogs from './pages/Activity';
+import Settings from './pages/Settings';
+import CRM from './pages/CRM';
+import Tasks from './pages/Tasks';
+import Communication from './pages/Communication';
+import Support from './pages/Support';
+import Security from './pages/Security';
+import Reports from './pages/Reports';
+import Financial from './pages/Financial';
+import Analytics from './pages/Analytics';
+import Home from './pages/Home';
+import About from './pages/About';
+import Blog from './pages/Blog';
+import Activity from './pages/Activity';
 import { PERMISSIONS } from './utils/permissions';
 
 /**
@@ -104,6 +109,120 @@ export function AdminRouter() {
                 <Route 
                   path="/" 
                   element={<Dashboard user={user} />} 
+                />
+
+                {/* Home - Admins have full access */}
+                <Route 
+                  path="home" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <Home user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* About - Admins have full access */}
+                <Route 
+                  path="about" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <About user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Blog - Admins have full access */}
+                <Route 
+                  path="blog" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <Blog user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Activity - Admins have full access */}
+                <Route 
+                  path="activity" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <Activity user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Analytics - Admins have full access */}
+                <Route 
+                  path="analytics" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      requiredPermission={PERMISSIONS.VIEW_ANALYTICS}
+                      allowAdmins={true}
+                    >
+                      <Analytics user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Reports - Admins have full access */}
+                <Route 
+                  path="reports" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      requiredPermission={PERMISSIONS.VIEW_REPORTS}
+                      allowAdmins={true}
+                    >
+                      <Reports user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Communication - Admins have full access */}
+                <Route 
+                  path="communication" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <Communication user={user} />
+                    </AdminRoute>
+                  } 
+                />
+
+                {/* Settings - Admins have full access */}
+                <Route 
+                  path="settings" 
+                  element={
+                    <AdminRoute
+                      user={user}
+                      isAuthenticated={isAuthenticated}
+                      allowAdmins={true}
+                    >
+                      <Settings user={user} />
+                    </AdminRoute>
+                  } 
                 />
 
                 {/* Developer Portal - Requires VIEW_DEVELOPER permission (but admins bypass) */}

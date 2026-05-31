@@ -9,7 +9,7 @@ import { Users } from './pages/Users';
 import { Content } from './pages/Content';
 import { Projects } from './pages/Projects';
 import { Applications } from './pages/Applications';
-import { Developer } from './pages/Developer';
+import Developer from './pages/Developer';
 import { ActivityLogs } from './pages/Activity';
 import { SettingsPage } from './pages/Settings';
 import { PERMISSIONS } from './utils/permissions';

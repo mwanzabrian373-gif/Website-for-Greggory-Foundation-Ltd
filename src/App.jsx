@@ -30,7 +30,7 @@ import Pricing from './pages/Pricing'
 
 // Admin Module
 import { AdminRouter } from './admin/AdminRouter'
-import { Developer } from './admin/pages/Developer'
+import Developer from './admin/pages/Developer'
 
 
 

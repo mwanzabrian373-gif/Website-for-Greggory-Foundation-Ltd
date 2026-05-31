@@ -4081,8 +4081,72 @@ try {
   app.use("/api/content", contentRoutes);
   console.log("[SERVER] Content routes loaded successfully");
 } catch (error) {
-  console.error("[SERVER] Error loading content routes:", error.message);
+  console.log("[SERVER] Content routes not available:", error.message);
 }
+
+// User Management Routes
+try {
+  const userManagementRoutes = require("./backend/routes/user-management");
+  app.use("/api/users", userManagementRoutes);
+  console.log("[SERVER] User management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] User management routes not available:", error.message);
+}
+// Projects Management Routes
+try {
+  const projectsManagementRoutes = require("./backend/routes/projects-management");
+  app.use("/api/projects", projectsManagementRoutes);
+  console.log("[SERVER] Projects management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Projects management routes not available:", error.message);
+}
+// Applications Management Routes
+try {
+  const applicationsManagementRoutes = require("./backend/routes/applications-management");
+  app.use("/api/applications", applicationsManagementRoutes);
+  console.log("[SERVER] Applications management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Applications management routes not available:", error.message);
+}
+// Content Management Routes
+try {
+  const contentManagementRoutes = require("./backend/routes/content-management");
+  app.use("/api/content-management", contentManagementRoutes);
+  console.log("[SERVER] Content management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Content management routes not available:", error.message);
+}
+// Analytics Management Routes
+try {
+  const analyticsManagementRoutes = require("./backend/routes/analytics-management");
+  app.use("/api/analytics", analyticsManagementRoutes);
+  console.log("[SERVER] Analytics management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Analytics management routes not available:", error.message);
+}
+// Reports Management Routes
+try {
+  const reportsManagementRoutes = require("./backend/routes/reports-management");
+  app.use("/api/reports", reportsManagementRoutes);
+  console.log("[SERVER] Reports management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Reports management routes not available:", error.message);
+}
+// Communication Management Routes
+try {
+  const communicationManagementRoutes = require("./backend/routes/communication-management");
+  app.use("/api/communication", communicationManagementRoutes);
+  console.log("[SERVER] Communication management routes loaded successfully");
+} catch (error) {
+  console.log("[SERVER] Communication management routes not available:", error.message);
+}
+
+
+
+
+
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

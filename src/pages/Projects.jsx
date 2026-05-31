@@ -458,7 +458,7 @@ const ProjectsSection = ({ onView, onEdit }) => {
               </div>
               <div className="space-y-3">
                 {filtered.filter(p => p.status === col).map(p => (
-                  <div key={p.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => onView && onView(p)}>
+                  <div key={p.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/projects/${p.id}`}>
                     <h4 className="font-semibold text-slate-800 text-sm mb-2">{p.name}</h4>
                     <div className="mb-2">
                       <GradientBar value={p.progress} />
@@ -474,7 +474,7 @@ const ProjectsSection = ({ onView, onEdit }) => {
                   <div className="text-center py-6 text-sm text-slate-400">No projects</div>
                 )}
               </div>
-              <button onClick={() => toast('Click View Details on a project first', 'warn')}
+              <button onClick={() => { const projectId = filtered.find(p => p.status === col)?.id; if (projectId) window.location.href = `/projects/${projectId}`; else toast('Please create a project first', 'warn'); }}
                 className="w-full border-2 border-dashed border-slate-200 rounded-xl py-2 text-slate-400 text-xs hover:border-blue-300 hover:text-blue-400 transition flex items-center justify-center gap-1 mt-2">
                 <Plus className="w-3.5 h-3.5" /> Add task
               </button>
@@ -543,10 +543,10 @@ const ProjectsSection = ({ onView, onEdit }) => {
                         color={['bg-blue-500','bg-purple-500','bg-pink-500','bg-emerald-500'][i % 4]} />
                     ))}
                   </div>
-                  <button onClick={() => onView && onView(p)} className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition flex items-center gap-1 justify-center">
+                  <button onClick={() => window.location.href = `/projects/${p.id}`} className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition flex items-center gap-1 justify-center">
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
-                  <button onClick={() => onEdit && onEdit(p)} className="text-sm bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition flex items-center gap-1 justify-center">
+                  <button onClick={() => toast(`Edit project ${p.name} - Edit feature coming soon`, 'warn')} className="text-sm bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition flex items-center gap-1 justify-center">
                     <Edit className="w-3.5 h-3.5" /> Edit
                   </button>
                 </div>
@@ -673,7 +673,7 @@ const ResourcesSection = () => (
           </div>
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="flex items-center gap-1"><FolderKanban className="w-3.5 h-3.5" />{member.projects} project{member.projects !== 1 ? 's' : ''}</span>
-            <button onClick={() => toast(`Email sent to ${member.email}`, 'success')} className="flex items-center gap-1 hover:text-blue-600 transition"><Mail className="w-3.5 h-3.5 text-blue-400" />{member.email}</button>
+            <button onClick={() => window.location.href = `mailto:${member.email}`} className="flex items-center gap-1 hover:text-blue-600 transition"><Mail className="w-3.5 h-3.5 text-blue-400" />{member.email}</button>
           </div>
         </SectionCard>
       ))}
@@ -983,7 +983,7 @@ const CommunicationSection = () => {
               </div>
               <div className="flex gap-2 mt-3">
                 <button onClick={() => toast(`Joining ${meet.title}…`)} className="flex-1 bg-blue-50 text-blue-600 text-xs py-1.5 rounded-lg hover:bg-blue-100 transition font-medium">Join</button>
-                <button onClick={() => toast(`Opening details for ${meet.title}`)} className="flex-1 bg-slate-50 text-slate-600 text-xs py-1.5 rounded-lg hover:bg-slate-100 transition font-medium">Details</button>
+                <button onClick={() => toast(`Meeting details for ${meet.title} - Details feature coming soon`, 'warn')} className="flex-1 bg-slate-50 text-slate-600 text-xs py-1.5 rounded-lg hover:bg-slate-100 transition font-medium">Details</button>
               </div>
             </SectionCard>
           ))}

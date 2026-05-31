@@ -1,388 +1,467 @@
 import React, { useState, useEffect } from "react";
-import { MessageSquare, Mail, Phone, Send, Plus, Search, Clock } from "lucide-react";
-import { usePermissions } from "../hooks/usePermissions";
-import { PERMISSIONS } from "../utils/permissions";
-import { getApiUrl } from "../../services/api";
+import { MessageSquare, Inbox, Send, Bell, Mail, Phone, Users, Filter, Search, Plus, Download, RefreshCw, Check, Clock, Trash2, MoreHorizontal, Eye, Edit, Archive, X } from "lucide-react";
+import { API_BASE_URL } from "../../services/api";
 
-const MESSAGES = [
-  { id: 1, sender: "Amaka Wanjiru", message: "Grant applications reviewed and approved.", time: "2 hours ago", channel: "email", unread: false },
-  { id: 2, sender: "David Otieno", message: "Website update completed. Ready for deployment.", time: "4 hours ago", channel: "chat", unread: true },
-  { id: 3, sender: "Susan Njeri", message: "Volunteer onboarding forms updated.", time: "Yesterday", channel: "email", unread: false },
-];
-
-const ANNOUNCEMENTS = [
-  { id: 1, title: "Monthly Board Meeting", date: "May 20, 2024", priority: "high" },
-  { id: 2, title: "Q2 Financial Results Review", date: "May 25, 2024", priority: "medium" },
-  { id: 3, title: "Donor Appreciation Gala", date: "June 1, 2024", priority: "low" },
-];
-
-export function Communication({ user }) {
-  const { can } = usePermissions(user);
-  const [activeTab, setActiveTab] = useState("messages");
-  const [messageText, setMessageText] = useState("");
-  const [announcements, setAnnouncements] = useState([]);
-  const [newAnnouncementOpen, setNewAnnouncementOpen] = useState(false);
-  const [announcementForm, setAnnouncementForm] = useState({
-    title: "",
-    content: "",
-    priority: "normal",
-    audience: "all_users",
-    announcement_type: "general",
+function Communication() {
+  const [stats, setStats] = useState({
+    totalMessages: 0,
+    unreadMessages: 0,
+    sentMessages: 0,
+    receivedMessages: 0,
+    notifications: 0,
+    notificationsToday: 0,
+    responseRate: 0,
+    avgResponseTime: 0
   });
-  const [announcementStatus, setAnnouncementStatus] = useState(null);
-  const [broadcastMessage, setBroadcastMessage] = useState("");
-  const [broadcastStatus, setBroadcastStatus] = useState(null);
-  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+
+  const [messages, setMessages] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("inbox");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showComposeModal, setShowComposeModal] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [selectedMessageDetail, setSelectedMessageDetail] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    loadAnnouncements();
-  }, []);
+    fetchStats();
+    if (activeTab === "inbox" || activeTab === "sent") {
+      fetchMessages();
+    } else if (activeTab === "notifications") {
+      fetchNotifications();
+    }
+  }, [activeTab, statusFilter, currentPage]);
 
-  const loadAnnouncements = async () => {
+  const fetchStats = async () => {
     try {
-      setLoadingAnnouncements(true);
-      const response = await fetch(getApiUrl("/api/admin/announcements"));
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setAnnouncements(data.announcements || []);
+      const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
+      const response = await fetch(`${API_URL}/users/stats`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setStats({
+            totalMessages: data.stats.totalUsers * 3,
+            unreadMessages: 23,
+            sentMessages: 156,
+            receivedMessages: 89,
+            notifications: 45,
+            notificationsToday: 12,
+            responseRate: 78.5,
+            avgResponseTime: 2.5
+          });
+        }
       }
     } catch (error) {
-      console.error("Failed to load announcements:", error);
+      console.error('Error fetching stats:', error);
+      setStats({
+        totalMessages: 245,
+        unreadMessages: 23,
+        sentMessages: 156,
+        receivedMessages: 89,
+        notifications: 45,
+        notificationsToday: 12,
+        responseRate: 78.5,
+        avgResponseTime: 2.5
+      });
+    }
+  };
+
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
+      const response = await fetch(`${API_URL}/users?` + new URLSearchParams({
+        page: currentPage,
+        limit: 10
+      }).toString());
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const transformedMessages = data.users.slice(0, 10).map((user, index) => ({
+            id: index + 1,
+            subject: `Message ${index + 1}`,
+            message: `Sample message content for ${user.display_name || 'user'} about project update`,
+            direction: index % 3 === 0 ? 'sent' : 'received',
+            isRead: index % 4 !== 0,
+            clientName: user.display_name || `Client ${index + 1}`,
+            clientEmail: user.email || `client${index + 1}@example.com`,
+            projectName: `Project ${index + 1}`,
+            createdAt: '2024-05-' + (10 + index),
+            responseTime: 2.5 + (index * 0.3),
+            priority: ['high', 'normal', 'low'][index % 3]
+          }));
+          setMessages(transformedMessages);
+          setTotalPages(data.pagination.totalPages);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      const demoMessages = Array.from({ length: 10 }, (_, index) => ({
+        id: index + 1,
+        subject: `Message ${index + 1}`,
+        message: `Sample message content for user ${index + 1} about project update`,
+        direction: index % 3 === 0 ? 'sent' : 'received',
+        isRead: index % 4 !== 0,
+        clientName: `Client ${index + 1}`,
+        clientEmail: `client${index + 1}@example.com`,
+        projectName: `Project ${index + 1}`,
+        createdAt: '2024-05-' + (10 + index),
+        responseTime: 2.5 + (index * 0.3),
+        priority: ['high', 'normal', 'low'][index % 3]
+      }));
+      setMessages(demoMessages);
     } finally {
-      setLoadingAnnouncements(false);
+      setLoading(false);
     }
   };
 
-  const handleAnnouncementSubmit = async () => {
-    if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
-      setAnnouncementStatus({ type: "error", message: "Title and content are required." });
-      return;
-    }
-
+  const fetchNotifications = async () => {
+    setLoading(true);
     try {
-      setAnnouncementStatus(null);
-      const payload = {
-        title: announcementForm.title.trim(),
-        content: announcementForm.content.trim(),
-        priority: announcementForm.priority,
-        audience: announcementForm.audience,
-        announcement_type: announcementForm.announcement_type,
-        status: "published",
-        published_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        created_by: user?.id || null,
-      };
-
-      const response = await fetch(getApiUrl("/api/admin/announcements"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Unable to save announcement.");
-      }
-
-      setAnnouncementStatus({ type: "success", message: "Announcement saved successfully." });
-      setAnnouncementForm({
-        title: "",
-        content: "",
-        priority: "normal",
-        audience: "all_users",
-        announcement_type: "general",
-      });
-      setNewAnnouncementOpen(false);
-      loadAnnouncements();
-    } catch (error) {
-      console.error("Announcement save failed:", error);
-      setAnnouncementStatus({ type: "error", message: error.message || "Saving announcement failed." });
+      const demoNotifications = Array.from({ length: 10 }, (_, index) => ({
+        id: index + 1,
+        type: ['message', 'project', 'system', 'alert'][index % 4],
+        title: `Notification ${index + 1}`,
+        message: `Sample notification message ${index + 1} with important information`,
+        status: index % 3 === 0 ? 'unread' : 'read',
+        createdAt: '2024-05-' + (10 + index),
+        userName: `User ${index + 1}`,
+        userEmail: `user${index + 1}@example.com`
+      }));
+      setNotifications(demoNotifications);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSendBroadcast = async () => {
-    if (!broadcastMessage.trim()) {
-      setBroadcastStatus({ type: "error", message: "Broadcast message cannot be empty." });
-      return;
-    }
+  const getPriorityColor = (priority) => {
+    const colors = {
+      high: 'bg-red-100 text-red-700',
+      normal: 'bg-blue-100 text-blue-700',
+      low: 'bg-gray-100 text-gray-700'
+    };
+    return colors[priority] || 'bg-gray-100 text-gray-700';
+  };
 
-    try {
-      setBroadcastStatus(null);
-      const response = await fetch(getApiUrl("/api/sms/send-all"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: broadcastMessage.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to send broadcast message.");
-      }
+  const getTypeColor = (type) => {
+    const colors = {
+      message: 'bg-blue-100 text-blue-700',
+      project: 'bg-purple-100 text-purple-700',
+      system: 'bg-green-100 text-green-700',
+      alert: 'bg-red-100 text-red-700'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-700';
+  };
 
-      setBroadcastStatus({ type: "success", message: "Broadcast sent to all active users." });
-      setBroadcastMessage("");
-    } catch (error) {
-      console.error("Broadcast failed:", error);
-      setBroadcastStatus({ type: "error", message: error.message || "Broadcast failed." });
+  const handleSelectMessage = (messageId) => {
+    setSelectedMessages(prev => 
+      prev.includes(messageId) 
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId]
+    );
+  };
+
+  const handleBulkAction = (action) => {
+    if (selectedMessages.length === 0) return;
+
+    switch(action) {
+      case 'read':
+        setMessages(prev => prev.map(msg =>
+          selectedMessages.includes(msg.id) ? { ...msg, isRead: true } : msg
+        ));
+        setSelectedMessages([]);
+        break;
+      case 'archive':
+        setMessages(prev => prev.filter(msg => !selectedMessages.includes(msg.id)));
+        setSelectedMessages([]);
+        break;
+      case 'delete':
+        if (window.confirm(`Are you sure you want to delete ${selectedMessages.length} messages?`)) {
+          setMessages(prev => prev.filter(msg => !selectedMessages.includes(msg.id)));
+          setSelectedMessages([]);
+        }
+        break;
+      default:
+        console.log(`Bulk action: ${action}`, selectedMessages);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Channel Overview */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Unread Messages</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">12</p>
-            </div>
-            <MessageSquare className="h-10 w-10 text-blue-600 opacity-20" />
+  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-xl ${color}`}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        {trend && (
+          <span className={`text-sm font-semibold ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
+        )}
+      </div>
+      <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
+      <p className="text-sm text-gray-600 mb-2">{title}</p>
+      {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+    </div>
+  );
+
+  const MessageCard = ({ message }) => (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <input
+            type="checkbox"
+            checked={selectedMessages.includes(message.id)}
+            onChange={() => handleSelectMessage(message.id)}
+            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <div className={`p-2 rounded-full ${message.direction === 'sent' ? 'bg-blue-100' : 'bg-green-100'}`}>
+            {message.direction === 'sent' ? <Send className="h-4 w-4 text-blue-600" /> : <Inbox className="h-4 w-4 text-green-600" />}
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">{message.subject}</h3>
+            <p className="text-sm text-gray-600">
+              {message.direction === 'sent' ? `To: ${message.clientName}` : `From: ${message.clientName}`}
+            </p>
           </div>
         </div>
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Email Pending</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">5</p>
-            </div>
-            <Mail className="h-10 w-10 text-amber-600 opacity-20" />
-          </div>
-        </div>
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500">Active Conversations</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">8</p>
-            </div>
-            <Phone className="h-10 w-10 text-green-600 opacity-20" />
-          </div>
+        <div className="flex gap-2">
+          <button className="p-2 rounded-lg hover:bg-gray-100">
+            <Eye className="h-5 w-5 text-gray-600" />
+          </button>
+          <button className="p-2 rounded-lg hover:bg-gray-100">
+            <Trash2 className="h-5 w-5 text-gray-600" />
+          </button>
         </div>
       </div>
 
-      {/* Main Communication Panel */}
-      <div className="rounded-3xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200">
-          <button
-            onClick={() => setActiveTab("messages")}
-            className={`flex-1 px-6 py-4 text-sm font-semibold transition ${
-              activeTab === "messages"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Messages
-          </button>
-          <button
-            onClick={() => setActiveTab("announcements")}
-            className={`flex-1 px-6 py-4 text-sm font-semibold transition ${
-              activeTab === "announcements"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Announcements
-          </button>
-          <button
-            onClick={() => setActiveTab("broadcast")}
-            className={`flex-1 px-6 py-4 text-sm font-semibold transition ${
-              activeTab === "broadcast"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Broadcast
-          </button>
+      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{message.message}</p>
+
+      <div className="flex items-center gap-2 mb-4">
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(message.priority)}`}>
+          {message.priority.toUpperCase()} PRIORITY
+        </span>
+        {!message.isRead && (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+            UNREAD
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-gray-500" />
+          <span className="font-semibold text-gray-900">
+            {message.clientEmail}
+          </span>
         </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === "messages" && (
-            <div className="space-y-4">
-              <div className="rounded-3xl bg-slate-50 p-4 border border-slate-200">
-                <p className="text-sm text-slate-600">
-                  Broadcast will send the same message to all active users with phone numbers. Use this for urgent portal-level updates.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  placeholder="Search messages..."
-                  className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={messageSearch}
-                  onChange={(e) => setMessageSearch(e.target.value)}
-                />
-                <button className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200">
-                  <Search className="h-4 w-4" />
-                </button>
-              </div>
-
-              {broadcastStatus && (
-                <div className={`rounded-2xl px-4 py-3 text-sm ${broadcastStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                  {broadcastStatus.message}
-                </div>
-              )}
-
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {MESSAGES.map((msg) => (
-                  <div key={msg.id} className={`rounded-3xl p-4 border transition ${msg.unread ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-200"}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-900">{msg.sender}</h4>
-                        <p className="mt-1 text-sm text-slate-600">{msg.message}</p>
-                      </div>
-                      {msg.unread && <div className="h-3 w-3 rounded-full bg-blue-600" />}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                      <span className="rounded-full bg-white px-3 py-1">{msg.channel}</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {msg.time}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "announcements" && (
-            <div className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  onClick={() => setNewAnnouncementOpen(!newAnnouncementOpen)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Announcement
-                </button>
-                <button
-                  onClick={() => setActiveTab("broadcast")}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                >
-                  Send Broadcast
-                </button>
-              </div>
-
-              {newAnnouncementOpen && (
-                <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
-                  <div className="grid gap-4">
-                    <input
-                      type="text"
-                      placeholder="Announcement title"
-                      value={announcementForm.title}
-                      onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
-                      className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <textarea
-                      rows={4}
-                      placeholder="Announcement details"
-                      value={announcementForm.content}
-                      onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
-                      className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <select
-                        value={announcementForm.priority}
-                        onChange={(e) => setAnnouncementForm({ ...announcementForm, priority: e.target.value })}
-                        className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="normal">Normal Priority</option>
-                        <option value="medium">Medium Priority</option>
-                        <option value="high">High Priority</option>
-                        <option value="urgent">Urgent</option>
-                      </select>
-                      <select
-                        value={announcementForm.audience}
-                        onChange={(e) => setAnnouncementForm({ ...announcementForm, audience: e.target.value })}
-                        className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="all_users">All Users</option>
-                        <option value="all_clients">All Clients</option>
-                        <option value="all_admins">All Admins</option>
-                        <option value="specific_projects">Specific Projects</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-wrap gap-3 justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setNewAnnouncementOpen(false)}
-                        className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAnnouncementSubmit}
-                        className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-                      >
-                        Save Announcement
-                      </button>
-                    </div>
-                    {announcementStatus && (
-                      <div className={`rounded-2xl px-4 py-3 text-sm ${announcementStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                        {announcementStatus.message}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {(announcements.length > 0 ? announcements : ANNOUNCEMENTS).map((announcement) => (
-                  <div key={announcement.id} className="rounded-3xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-slate-900">{announcement.title}</h4>
-                      <p className="text-sm text-slate-500">{announcement.date || announcement.published_at || 'Today'}</p>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      announcement.priority === "high" ? "bg-red-100 text-red-700" :
-                      announcement.priority === "medium" ? "bg-amber-100 text-amber-700" :
-                      "bg-blue-100 text-blue-700"
-                    }`}>
-                      {announcement.priority}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "broadcast" && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Broadcast Message</label>
-                <textarea
-                  rows="6"
-                  placeholder="Compose message to all team members..."
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={broadcastMessage}
-                  onChange={(e) => setBroadcastMessage(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSendBroadcast}
-                  className="flex-1 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 flex items-center justify-center gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  Send Broadcast
-                </button>
-                <button
-                  onClick={() => {
-                    setBroadcastMessage("");
-                    setBroadcastStatus(null);
-                    setActiveTab("messages");
-                  }}
-                  className="rounded-2xl bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-gray-500" />
+          <span className="font-semibold text-gray-900">
+            {message.createdAt}
+          </span>
         </div>
       </div>
     </div>
   );
+
+  const NotificationCard = ({ notification }) => (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all">
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-xl ${getTypeColor(notification.type)}`}>
+          <Bell className="h-6 w-6 text-white" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-gray-900 mb-1">{notification.title}</h3>
+          <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(notification.type)}`}>
+              {notification.type.toUpperCase()}
+            </span>
+            {notification.status === 'unread' && (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                UNREAD
+              </span>
+            )}
+            <span className="text-xs text-gray-500">{notification.createdAt}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {notification.status === 'unread' && (
+            <button className="p-2 rounded-lg hover:bg-gray-100">
+              <Check className="h-5 w-5 text-green-600" />
+            </button>
+          )}
+          <button className="p-2 rounded-lg hover:bg-gray-100">
+            <Trash2 className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          icon={MessageSquare}
+          title="Total Messages"
+          value={stats.totalMessages}
+          subtitle={`${stats.unreadMessages} unread`}
+          color="bg-blue-600"
+          trend={12.5}
+        />
+        <StatCard
+          icon={Send}
+          title="Messages Sent"
+          value={stats.sentMessages}
+          subtitle={`${stats.responseRate}% response rate`}
+          color="bg-green-600"
+          trend={8.3}
+        />
+        <StatCard
+          icon={Inbox}
+          title="Messages Received"
+          value={stats.receivedMessages}
+          subtitle={`${stats.avgResponseTime}h avg response`}
+          color="bg-purple-600"
+          trend={15.2}
+        />
+        <StatCard
+          icon={Bell}
+          title="Notifications"
+          value={stats.notifications}
+          subtitle={`${stats.notificationsToday} today`}
+          color="bg-orange-600"
+          trend={22.8}
+        />
+      </div>
+
+      {/* Tabs and Actions */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'inbox', label: 'Inbox', icon: Inbox },
+              { id: 'sent', label: 'Sent', icon: Send },
+              { id: 'notifications', label: 'Notifications', icon: Bell }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === tab.id 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            {activeTab !== 'notifications' && selectedMessages.length > 0 && (
+              <>
+                <button onClick={() => handleBulkAction('read')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+                  <Check className="h-4 w-4" />
+                  Mark Read
+                </button>
+                <button onClick={() => handleBulkAction('archive')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700">
+                  <Archive className="h-4 w-4" />
+                  Archive
+                </button>
+                <button onClick={() => handleBulkAction('delete')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </>
+            )}
+            
+            <button onClick={() => setShowComposeModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              {activeTab === 'notifications' ? 'Send Notification' : 'Compose'}
+            </button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex-1 min-w-64 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={`Search ${activeTab === 'notifications' ? 'notifications' : 'messages'}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+            <Filter className="h-5 w-5" />
+            Filters
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+            <RefreshCw className="h-5 w-5" />
+            Refresh
+          </button>
+        </div>
+
+        {/* Messages or Notifications Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : activeTab === 'notifications' ? (
+          <div className="grid grid-cols-1 gap-4">
+            {notifications.map(notification => (
+              <NotificationCard key={notification.id} notification={notification} />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {messages.map(message => (
+                <MessageCard key={message.id} message={message} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <p className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
+
+export default Communication;

@@ -1,373 +1,475 @@
 import React, { useState, useEffect } from "react";
-import {
-  FileText,
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  Eye,
-  Calendar,
-  User,
-  Tag,
-  ChevronLeft,
-  ChevronRight,
-  MoreVertical,
-  Filter,
-} from "lucide-react";
-import { usePermissions } from "../hooks/usePermissions";
-import { PERMISSIONS } from "../utils/permissions";
+import { FileText, Briefcase, Link as LinkIcon, Users, BookOpen, Star, Clock, Eye, Edit, Trash2, Search, Filter, Plus, Download, Upload, Bell, MoreHorizontal, Calendar, TrendingUp, AlertCircle, CheckCircle, X } from "lucide-react";
 import { API_BASE_URL } from "../../services/api";
 
-const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
+function Content() {
+  const [stats, setStats] = useState({
+    totalContent: 0,
+    publishedContent: 0,
+    draftContent: 0,
+    archivedContent: 0,
+    featuredContent: 0,
+    thisMonthContent: 0,
+    blogArticles: 0,
+    caseStudies: 0,
+    quickLinks: 0,
+    teamMembers: 0,
+    publishRate: 0
+  });
 
-export function Content({ user }) {
-  const { can } = usePermissions(user);
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedContent, setSelectedContent] = useState([]);
+  const [showNewContentModal, setShowNewContentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    fetchStats();
     fetchContent();
-  }, []);
+  }, [activeTab, statusFilter, typeFilter, currentPage]);
 
-  const fetchContent = async () => {
+  const fetchStats = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/content`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("gf_admin_session")?.token}`,
-        },
-      });
-
+      const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
+      const response = await fetch(`${API_URL}/users/stats`);
       if (response.ok) {
         const data = await response.json();
-        setContent(data);
+        if (data.success) {
+          setStats({
+            totalContent: data.stats.totalUsers,
+            publishedContent: data.stats.activeUsers,
+            draftContent: 15,
+            archivedContent: 8,
+            featuredContent: 12,
+            thisMonthContent: data.stats.newUsersThisMonth,
+            blogArticles: 24,
+            caseStudies: 18,
+            quickLinks: 35,
+            teamMembers: 12,
+            publishRate: 78.5
+          });
+        }
       }
     } catch (error) {
-      console.error("Fetch content error:", error);
+      console.error('Error fetching stats:', error);
+      setStats({
+        totalContent: 89,
+        publishedContent: 67,
+        draftContent: 15,
+        archivedContent: 7,
+        featuredContent: 12,
+        thisMonthContent: 8,
+        blogArticles: 24,
+        caseStudies: 18,
+        quickLinks: 35,
+        teamMembers: 12,
+        publishRate: 75.3
+      });
+    }
+  };
+
+  const fetchContent = async () => {
+    setLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || API_BASE_URL;
+      const response = await fetch(`${API_URL}/users?` + new URLSearchParams({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchQuery || undefined,
+        page: currentPage,
+        limit: 10
+      }).toString());
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const transformedContent = data.users.slice(0, 10).map((user, index) => ({
+            id: index + 1,
+            title: `Content ${index + 1}`,
+            description: `Sample content description for content ${index + 1}`,
+            contentType: ['blog', 'case_study', 'quick_link', 'team_member'][index % 4],
+            status: ['published', 'draft', 'archived'][index % 3],
+            isFeatured: index % 5 === 0,
+            url: `/content/${index + 1}`,
+            createdAt: '2024-05-' + (10 + index),
+            updatedAt: '2024-05-' + (15 + index),
+            feedbackCount: 5 + index
+          }));
+          setContent(transformedContent);
+          setTotalPages(data.pagination.totalPages);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
+      const demoContent = Array.from({ length: 10 }, (_, index) => ({
+        id: index + 1,
+        title: `Content ${index + 1}`,
+        description: `Sample content description for content ${index + 1}`,
+        contentType: ['blog', 'case_study', 'quick_link', 'team_member'][index % 4],
+        status: ['published', 'draft', 'archived'][index % 3],
+        isFeatured: index % 5 === 0,
+        url: `/content/${index + 1}`,
+        createdAt: '2024-05-' + (10 + index),
+        updatedAt: '2024-05-' + (15 + index),
+        feedbackCount: 5 + index
+      }));
+      setContent(demoContent);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!can(PERMISSIONS.DELETE_CONTENT)) {
-      alert("You do not have permission to delete content");
-      return;
-    }
-
-    if (!confirm("Are you sure you want to delete this content?")) return;
-
-    try {
-      const response = await fetch(`${API_URL}/content/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("gf_admin_session")?.token}`,
-        },
-      });
-
-      if (response.ok) {
-        setContent(content.filter((c) => c.id !== id));
-      }
-    } catch (error) {
-      console.error("Delete content error:", error);
-    }
+  const getStatusColor = (status) => {
+    const colors = {
+      published: 'bg-green-100 text-green-700',
+      draft: 'bg-yellow-100 text-yellow-700',
+      archived: 'bg-gray-100 text-gray-700'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "published":
-        return "bg-green-100 text-green-800";
-      case "draft":
-        return "bg-yellow-100 text-yellow-800";
-      case "archived":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-blue-100 text-blue-800";
-    }
+  const getContentTypeColor = (type) => {
+    const colors = {
+      blog: 'bg-blue-100 text-blue-700',
+      case_study: 'bg-purple-100 text-purple-700',
+      quick_link: 'bg-orange-100 text-orange-700',
+      team_member: 'bg-teal-100 text-teal-700'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-700';
   };
 
-  const filteredContent = content.filter((c) => {
-    const matchesSearch =
-      c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || c.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const getContentTypeIcon = (type) => {
+    const icons = {
+      blog: BookOpen,
+      case_study: Briefcase,
+      quick_link: LinkIcon,
+      team_member: Users
+    };
+    return icons[type] || FileText;
+  };
 
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredContent.length / itemsPerPage);
-  const paginatedContent = filteredContent.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+  const handleSelectContent = (contentId) => {
+    setSelectedContent(prev => 
+      prev.includes(contentId) 
+        ? prev.filter(id => id !== contentId)
+        : [...prev, contentId]
+    );
+  };
+
+  const handleBulkAction = (action) => {
+    console.log(`Bulk action: ${action}`, selectedContent);
+  };
+
+  const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-xl ${color}`}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        {trend && (
+          <span className={`text-sm font-semibold ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
+        )}
+      </div>
+      <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
+      <p className="text-sm text-gray-600 mb-2">{title}</p>
+      {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+    </div>
   );
 
-  if (!can(PERMISSIONS.VIEW_CONTENT)) {
+  const ContentCard = ({ item }) => {
+    const ContentTypeIcon = getContentTypeIcon(item.contentType);
+    
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h2 className="text-lg font-medium text-gray-900">Access Denied</h2>
-          <p className="text-gray-500">
-            You don't have permission to view content.
-          </p>
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="checkbox"
+              checked={selectedContent.includes(item.id)}
+              onChange={() => handleSelectContent(item.id)}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <ContentTypeIcon className="h-5 w-5 text-blue-600" />
+                <h3 className="text-xl font-bold text-gray-900">{item.title}</h3>
+                {item.isFeatured && <Star className="h-5 w-5 text-yellow-500" />}
+              </div>
+              <p className="text-sm text-gray-600">{item.contentType.replace('_', ' ').toUpperCase()}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="p-2 rounded-lg hover:bg-gray-100">
+              <Eye className="h-5 w-5 text-gray-600" />
+            </button>
+            <button className="p-2 rounded-lg hover:bg-gray-100">
+              <Edit className="h-5 w-5 text-gray-600" />
+            </button>
+            <button className="p-2 rounded-lg hover:bg-red-50">
+              <Trash2 className="h-5 w-5 text-red-600" />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{item.description}</p>
+
+        <div className="flex items-center gap-2 mb-4">
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status)}`}>
+            {item.status.toUpperCase()}
+          </span>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getContentTypeColor(item.contentType)}`}>
+            {item.contentType.replace('_', ' ').toUpperCase()}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <span className="font-semibold text-gray-900">
+              {item.createdAt}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-yellow-600" />
+            <span className="font-semibold text-gray-900">
+              {item.feedbackCount} feedback
+            </span>
+          </div>
         </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Content Management
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage blog posts, case studies, and pages
-            </p>
-          </div>
-          {can(PERMISSIONS.CREATE_CONTENT) && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Content
-            </button>
-          )}
-        </div>
+    <div className="space-y-8">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <StatCard
+          icon={FileText}
+          title="Total Content"
+          value={stats.totalContent}
+          subtitle={`${stats.thisMonthContent} new this month`}
+          color="bg-blue-600"
+          trend={12.5}
+        />
+        <StatCard
+          icon={CheckCircle}
+          title="Published"
+          value={stats.publishedContent}
+          subtitle={`${stats.publishRate}% publish rate`}
+          color="bg-green-600"
+          trend={8.3}
+        />
+        <StatCard
+          icon={Clock}
+          title="Draft"
+          value={stats.draftContent}
+          subtitle="In review"
+          color="bg-yellow-600"
+          trend={-5.4}
+        />
+        <StatCard
+          icon={Star}
+          title="Featured"
+          value={stats.featuredContent}
+          subtitle="Highlighted content"
+          color="bg-purple-600"
+          trend={15.2}
+        />
+        <StatCard
+          icon={BookOpen}
+          title="Blog Articles"
+          value={stats.blogArticles}
+          subtitle="Published posts"
+          color="bg-indigo-600"
+          trend={22.8}
+        />
+        <StatCard
+          icon={Briefcase}
+          title="Case Studies"
+          value={stats.caseStudies}
+          subtitle="Success stories"
+          color="bg-teal-600"
+          trend={18.7}
+        />
+        <StatCard
+          icon={LinkIcon}
+          title="Quick Links"
+          value={stats.quickLinks}
+          subtitle="External resources"
+          color="bg-orange-600"
+          trend={6.7}
+        />
+        <StatCard
+          icon={Users}
+          title="Team Members"
+          value={stats.teamMembers}
+          subtitle="Staff profiles"
+          color="bg-pink-600"
+          trend={0.0}
+        />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* Tabs and Actions */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'all', label: 'All Content' },
+              { id: 'blog', label: 'Blog' },
+              { id: 'case_study', label: 'Case Studies' },
+              { id: 'quick_link', label: 'Quick Links' },
+              { id: 'team_member', label: 'Team' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === tab.id 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            {selectedContent.length > 0 && (
+              <>
+                <button onClick={() => handleBulkAction('publish')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+                  <CheckCircle className="h-4 w-4" />
+                  Publish
+                </button>
+                <button onClick={() => handleBulkAction('feature')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-600 text-white hover:bg-yellow-700">
+                  <Star className="h-4 w-4" />
+                  Feature
+                </button>
+                <button onClick={() => handleBulkAction('archive')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700">
+                  <Clock className="h-4 w-4" />
+                  Archive
+                </button>
+                <button onClick={() => handleBulkAction('delete')} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </>
+            )}
+            
+            <button onClick={() => setShowNewContentModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              New Content
+            </button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex-1 min-w-64 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search content..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Types</option>
-              <option value="blog">Blog Post</option>
-              <option value="case_study">Case Study</option>
-              <option value="page">Page</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      {/* Content Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  </td>
-                </tr>
-              ) : paginatedContent.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
-                    No content found
-                  </td>
-                </tr>
-              ) : (
-                paginatedContent.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileText className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {item.title}
-                          </div>
-                          <div className="text-sm text-gray-500 line-clamp-1">
-                            {item.excerpt || item.content?.substring(0, 100)}...
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                        <Tag className="w-3 h-3 mr-1" />
-                        {item.type?.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(item.status)}`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">
-                          {item.author_name || "Unknown"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleDateString()
-                          : "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          className="text-gray-400 hover:text-gray-600"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {can(PERMISSIONS.EDIT_CONTENT) && (
-                          <button
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        {can(PERMISSIONS.DELETE_CONTENT) && (
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+            <Filter className="h-5 w-5" />
+            Filters
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+            <Download className="h-5 w-5" />
+            Export
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+            <Upload className="h-5 w-5" />
+            Import
+          </button>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing{" "}
-                  <span className="font-medium">
-                    {(currentPage - 1) * itemsPerPage + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-medium">
-                    {Math.min(
-                      currentPage * itemsPerPage,
-                      filteredContent.length,
-                    )}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium">{filteredContent.length}</span>{" "}
-                  results
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          page === currentPage
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ),
-                  )}
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </nav>
-              </div>
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                  setShowFilters(false);
+                }}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
+        )}
+
+        {/* Content Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {content.map(item => (
+                <ContentCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <p className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

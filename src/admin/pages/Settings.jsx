@@ -1,460 +1,259 @@
-import React, { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Save, RefreshCw, Bell, Shield, Database, Globe, Mail, Smartphone, Palette, Users, Lock, Key, Server, HardDrive, Wifi, Monitor, Moon, Sun, ChevronRight, AlertCircle, CheckCircle, ToggleLeft, ToggleRight } from "lucide-react";
+import React, { useState } from "react";
+import { Settings as SettingsIcon, User, Lock, Bell, Database, Globe, Mail, Shield, CreditCard, Layers, Sliders, ChevronRight, ChevronDown, ToggleLeft, ToggleRight, Save, RefreshCw } from "lucide-react";
 
-export function Settings({ user }) {
-  const [activeTab, setActiveTab] = useState("general");
-  const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+function Settings() {
+  const [activeSection, setActiveSection] = useState("general");
+  const [expandedCategories, setExpandedCategories] = useState({
+    general: true,
+    user: false,
+    security: false,
+    api: false,
+    email: false,
+    system: false
+  });
+  const [settings, setSettings] = useState({
+    general: {
+      siteName: "Greggory Foundation Ltd",
+      siteTagline: "Building Tomorrow's Solutions",
+      timezone: "UTC",
+      language: "en",
+      dateFormat: "MM/DD/YYYY",
+      timeFormat: "12h",
+      maintenanceMode: false
+    },
+    user: {
+      allowRegistration: true,
+      requireEmailVerification: true,
+      defaultUserRole: "user",
+      sessionTimeout: 30,
+      passwordResetDays: 90
+    },
+    security: {
+      enable2FA: false,
+      requireStrongPasswords: true,
+      minPasswordLength: 8,
+      maxLoginAttempts: 5,
+      lockoutDuration: 15,
+      ipWhitelist: "",
+      enableAuditLogs: true
+    },
+    api: {
+      enableAPI: true,
+      rateLimit: 1000,
+      apiKeyExpiry: 90,
+      webhookURL: "",
+      enableCORS: true,
+      allowedOrigins: "*"
+    },
+    email: {
+      smtpHost: "smtp.example.com",
+      smtpPort: 587,
+      smtpSecure: true,
+      smtpUser: "",
+      fromEmail: "noreply@example.com",
+      fromName: "Greggory Foundation",
+      emailNotifications: true
+    },
+    system: {
+      enableBackups: true,
+      backupFrequency: "daily",
+      backupRetention: 30,
+      logRetention: 90,
+      debugMode: false,
+      performanceMonitoring: true
+    }
+  });
 
-  const tabs = [
-    { id: "general", label: "General", icon: SettingsIcon },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "database", label: "Database", icon: Database },
-    { id: "integrations", label: "Integrations", icon: Globe },
-    { id: "appearance", label: "Appearance", icon: Palette }
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const toggleSetting = (category, setting) => {
+    setSettings(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [setting]: !prev[category][setting]
+      }
+    }));
+  };
+
+  const updateSetting = (category, setting, value) => {
+    setSettings(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [setting]: value
+      }
+    }));
+  };
+
+  const categories = [
+    { id: 'general', name: 'General Settings', icon: Sliders, color: 'bg-blue-600' },
+    { id: 'user', name: 'User Preferences', icon: User, color: 'bg-purple-600' },
+    { id: 'security', name: 'Security', icon: Shield, color: 'bg-red-600' },
+    { id: 'api', name: 'API Configuration', icon: Globe, color: 'bg-green-600' },
+    { id: 'email', name: 'Email Settings', icon: Mail, color: 'bg-orange-600' },
+    { id: 'system', name: 'System Configuration', icon: Database, color: 'bg-teal-600' }
   ];
 
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveSuccess(false);
-    // Simulate save operation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-  };
-
-  const GeneralSettings = () => (
+  const SettingGroup = ({ category, items }) => (
     <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Company Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
+      {Object.entries(items).map(([key, value]) => (
+        <div key={key} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="flex-1">
+            <label className="text-sm font-medium text-gray-700">
+              {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+            </label>
+            {typeof value === 'boolean' && (
+              <p className="text-xs text-gray-500 mt-1">
+                {value ? 'Currently enabled' : 'Currently disabled'}
+              </p>
+            )}
+          </div>
+          {typeof value === 'boolean' ? (
+            <button
+              onClick={() => toggleSetting(category, key)}
+              className={`relative w-14 h-7 rounded-full transition-colors ${value ? 'bg-green-600' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform ${value ? 'translate-x-7' : 'translate-x-0'}`} />
+            </button>
+          ) : typeof value === 'number' ? (
+            <input
+              type="number"
+              value={value}
+              onChange={(e) => updateSetting(category, key, parseInt(e.target.value))}
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          ) : (
             <input
               type="text"
-              defaultValue="Greggory Foundation Ltd"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={value}
+              onChange={(e) => updateSetting(category, key, e.target.value)}
+              className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
-            <input
-              type="email"
-              defaultValue="info@greggoryfoundation.org"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
-            <input
-              type="tel"
-              defaultValue="+254 700 000 000"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Timezone</label>
-            <select className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-              <option>Africa/Nairobi (EAT)</option>
-              <option>UTC</option>
-              <option>America/New_York</option>
-              <option>Europe/London</option>
-            </select>
-          </div>
+          )}
         </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">System Configuration</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Maintenance Mode</p>
-              <p className="text-sm text-slate-600">Temporarily disable public access</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Debug Mode</p>
-              <p className="text-sm text-slate-600">Enable detailed error logging</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Auto Backup</p>
-              <p className="text-sm text-slate-600">Automatic daily database backups</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
   );
-
-  const NotificationSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Email Notifications</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">New User Registration</p>
-              <p className="text-sm text-slate-600">Notify when new users register</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Application Submissions</p>
-              <p className="text-sm text-slate-600">Notify when applications are submitted</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">System Alerts</p>
-              <p className="text-sm text-slate-600">Critical system notifications</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">SMS Notifications</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Two-Factor Authentication</p>
-              <p className="text-sm text-slate-600">SMS codes for login verification</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Security Alerts</p>
-              <p className="text-sm text-slate-600">SMS alerts for security events</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const SecuritySettings = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Password Policy</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Minimum Length</label>
-            <input
-              type="number"
-              defaultValue={8}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Session Timeout (minutes)</label>
-            <input
-              type="number"
-              defaultValue={30}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Two-Factor Authentication</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Enable 2FA for Admins</p>
-              <p className="text-sm text-slate-600">Require two-factor for admin accounts</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div>
-              <p className="font-medium text-slate-900">Enable 2FA for All Users</p>
-              <p className="text-sm text-slate-600">Require two-factor for all user accounts</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const DatabaseSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Backup Configuration</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Backup Frequency</label>
-            <select className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-              <option>Daily</option>
-              <option>Weekly</option>
-              <option>Monthly</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Retention Period (days)</label>
-            <input
-              type="number"
-              defaultValue={30}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Database Health</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Database className="h-5 w-5 text-blue-600" />
-              <span className="text-green-600 text-sm">Healthy</span>
-            </div>
-            <p className="text-sm text-slate-600">Connection Status</p>
-          </div>
-          <div className="bg-white rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <HardDrive className="h-5 w-5 text-green-600" />
-              <span className="text-slate-900 font-semibold">45%</span>
-            </div>
-            <p className="text-sm text-slate-600">Disk Usage</p>
-          </div>
-          <div className="bg-white rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Server className="h-5 w-5 text-purple-600" />
-              <span className="text-slate-900 font-semibold">12ms</span>
-            </div>
-            <p className="text-sm text-slate-600">Query Time</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const IntegrationSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Third-Party Services</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div className="flex items-center gap-4">
-              <Mail className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="font-medium text-slate-900">Email Service</p>
-                <p className="text-sm text-slate-600">SMTP configuration</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-green-600">Connected</span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div className="flex items-center gap-4">
-              <Smartphone className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="font-medium text-slate-900">SMS Gateway</p>
-                <p className="text-sm text-slate-600">Africa's Talking</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-green-600">Connected</span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div className="flex items-center gap-4">
-              <Globe className="h-8 w-8 text-purple-600" />
-              <div>
-                <p className="font-medium text-slate-900">Payment Gateway</p>
-                <p className="text-sm text-slate-600">M-Pesa Integration</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-orange-600">Setup Required</span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const AppearanceSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Theme Preferences</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Primary Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                defaultValue="#2563EB"
-                className="w-12 h-12 rounded-lg border border-slate-300 cursor-pointer"
-              />
-              <input
-                type="text"
-                defaultValue="#2563EB"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Secondary Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                defaultValue="#7C3AED"
-                className="w-12 h-12 rounded-lg border border-slate-300 cursor-pointer"
-              />
-              <input
-                type="text"
-                defaultValue="#7C3AED"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none uppercase"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Display Settings</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div className="flex items-center gap-4">
-              <Sun className="h-6 w-6 text-orange-500" />
-              <p className="font-medium text-slate-900">Light Mode</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl">
-            <div className="flex items-center gap-4">
-              <Moon className="h-6 w-6 text-slate-700" />
-              <p className="font-medium text-slate-900">Dark Mode</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-300 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "general": return <GeneralSettings />;
-      case "notifications": return <NotificationSettings />;
-      case "security": return <SecuritySettings />;
-      case "database": return <DatabaseSettings />;
-      case "integrations": return <IntegrationSettings />;
-      case "appearance": return <AppearanceSettings />;
-      default: return <GeneralSettings />;
-    }
-  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-600 mt-1">Configure system settings and preferences</p>
+    <div className="flex h-[calc(100vh-200px)]">
+      {/* Sidebar Navigation */}
+      <div className="w-80 bg-gray-900 text-white flex flex-col">
+        <div className="p-6 border-b border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-blue-600">
+              <SettingsIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Settings</h2>
+              <p className="text-sm text-gray-400">Configure your system</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
-            <RefreshCw className="h-4 w-4" />
-            Reset to Defaults
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : saveSuccess ? (
-              <>
-                <CheckCircle className="h-4 w-4" />
-                Saved!
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save Changes
-              </>
-            )}
+
+        <div className="flex-1 overflow-y-auto py-4">
+          {categories.map(category => (
+            <div key={category.id}>
+              <button
+                onClick={() => toggleCategory(category.id)}
+                className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${category.color}`}>
+                    <category.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-medium">{category.name}</span>
+                </div>
+                {expandedCategories[category.id] ? (
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+
+              {expandedCategories[category.id] && (
+                <div className="px-6 py-2 space-y-1 bg-gray-800">
+                  {Object.keys(settings[category.id]).map(setting => (
+                    <button
+                      key={setting}
+                      onClick={() => setActiveSection(`${category.id}.${setting}`)}
+                      className={`w-full px-4 py-2 text-left text-sm rounded-lg transition-colors ${
+                        activeSection === `${category.id}.${setting}`
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      {setting.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="p-6 border-t border-gray-800">
+          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
+            <Save className="h-5 w-5" />
+            Save All Changes
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-          <nav className="space-y-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  activeTab === tab.id
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-700 hover:bg-slate-100"
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                {tab.label}
-                {activeTab === tab.id && <ChevronRight className="h-4 w-4 ml-auto" />}
-              </button>
-            ))}
-          </nav>
-        </div>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto bg-gray-100 p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {categories.find(c => c.id === activeSection.split('.')[0])?.name || 'Settings'}
+            </h1>
+            <p className="text-gray-600">Configure your {activeSection.split('.')[0]} preferences</p>
+          </div>
 
-        {/* Tab Content */}
-        <div className="lg:col-span-3">
-          {renderTabContent()}
+          {categories.map(category => (
+            <div key={category.id} className={`mb-8 ${expandedCategories[category.id] ? '' : 'hidden'}`}>
+              <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className={`p-3 rounded-xl ${category.color}`}>
+                    <category.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
+                    <p className="text-sm text-gray-600">Manage your {category.name.toLowerCase()}</p>
+                  </div>
+                </div>
+
+                <SettingGroup category={category.id} items={settings[category.id]} />
+              </div>
+            </div>
+          ))}
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-8">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-lg bg-blue-600">
+                <RefreshCw className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Need Help?</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Visit our documentation or contact support for assistance with settings configuration.
+                </p>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  View Documentation
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+export default Settings;

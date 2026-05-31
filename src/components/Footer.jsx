@@ -59,9 +59,9 @@ const Footer = () => {
     <>
       <footer className="bg-navy-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {/* Company Info */}
-            <div className="col-span-1 md:col-span-2">
+            <div className="col-span-1 md:col-span-1">
               <div className="mb-4 sm:mb-6">
                 <Link to="/">
                   <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">The Greggory Foundation Ltd.</h2>
@@ -76,38 +76,6 @@ const Footer = () => {
                 hoverColor="hover:text-teal-400"
                 iconSize={16}
               />
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Links</h3>
-              <ul className="space-y-1 sm:space-y-2">
-                <li>
-                  <Link to="/" className="text-sm sm:text-base text-gray-300 hover:text-teal-400 transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/about" className="text-sm sm:text-base text-gray-300 hover:text-teal-400 transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/services" className="text-sm sm:text-base text-gray-300 hover:text-teal-400 transition-colors">
-                    Our Services
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/case-studies" className="text-sm sm:text-base text-gray-300 hover:text-teal-400 transition-colors">
-                    Case Studies
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/blog" className="text-sm sm:text-base text-gray-300 hover:text-teal-400 transition-colors">
-                    Blog
-                  </Link>
-                </li>
-              </ul>
             </div>
 
             {/* Contact Info */}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, LogIn } from 'lucide-react'
+import { Menu, X, LogIn, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import companies from '../data/companies'
 
@@ -41,45 +41,41 @@ const Navbar = () => {
     <>
       <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between h-[160px] gap-6">
-            {/* Brand Header with Logo */}
-            <div className="flex items-center flex-shrink-0 min-w-[220px]" style={{ marginLeft: '-16px' }}>
-              <img
-                src="/brand-header.png/sja.PNG"
-                alt="SJA"
-                className="h-[110px] sm:h-30 w-auto object-contain max-w-[210px] sm:max-w-none"
-                style={{
-                  display: 'block',
-                  marginLeft: '-16px',
-                  position: 'relative',
-                  zIndex: 10
-                }}
-                onError={(e) => {
-                  console.error('Failed to load sja image:', e.target.src);
-                }}
-                onLoad={() => {
-                  console.log('SJA image loaded successfully');
-                }}
-              />
+          <div className="flex items-center justify-between h-20">
+            {/* Left Section - Logo */}
+            <div className="flex items-center flex-shrink-0">
+              <Link to="/">
+                <img
+                  src="/brand-header.png/sja.PNG"
+                  alt="SJA"
+                  className="h-14 w-auto object-contain"
+                  onError={(e) => {
+                    console.error('Failed to load sja image:', e.target.src);
+                  }}
+                  onLoad={() => {
+                    console.log('SJA image loaded successfully');
+                  }}
+                />
+              </Link>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex flex-1 flex-wrap items-center justify-center gap-6 overflow-visible">
-              {navigation.map((item, index) => (
-                <div key={item.path} className="relative group whitespace-nowrap">
+            {/* Center Section - Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navigation.map((item) => (
+                <div key={item.path} className="relative group">
                   {item.dropdown ? (
                     <>
                       <button
-                        className="flex items-center text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors duration-200 px-1 py-1 min-h-[40px]"
+                        className="flex items-center text-sm font-medium text-gray-700 hover:text-teal-600 transition-colors duration-200"
                         onClick={() => setCompaniesDropdownOpen(!companiesDropdownOpen)}
                       >
                         {item.name}
-                        <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       <div
-                        className={`absolute left-0 mt-2 w-80 bg-gradient-to-br from-blue-500/90 to-blue-600/90 backdrop-blur-lg rounded-lg shadow-xl py-3 z-50 border border-blue-400/30 ${
+                        className={`absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-100 ${
                           companiesDropdownOpen ? 'block' : 'hidden'
                         }`}
                         onMouseLeave={() => setCompaniesDropdownOpen(false)}
@@ -89,76 +85,68 @@ const Navbar = () => {
                             key={subItem.path}
                             to={subItem.path}
                             onClick={() => setCompaniesDropdownOpen(false)}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white hover:bg-white/20 rounded-md mx-1 transition-all duration-200"
+                            className="block px-3 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors"
                           >
-                            <span className="break-words">{subItem.name}</span>
+                            {subItem.name}
                           </Link>
                         ))}
                       </div>
                     </>
                   ) : (
-                    <div className={item.name === 'Home' ? 'flex flex-col items-center min-h-[40px]' : 'flex items-center min-h-[40px]'}>
-                      <Link
-                        to={item.path}
-                        className={`text-sm font-medium transition-colors duration-200 px-1 py-1 ${
-                          location.pathname === item.path
-                            ? 'text-teal-600'
-                            : 'text-gray-700 hover:text-teal-600'
-                        }`}
-                      >
-                        {item.name}
-                      </Link>
-                      {/* Show Login/Logout button directly under Home link */}
-                      {item.name === 'Home' && (
-                        <div className="mt-2">
-                          {isAuthenticated ? (
-                            <button
-                              onClick={handleLogout}
-                              className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              Logout
-                            </button>
-                          ) : (
-                            <Link
-                              to="/login"
-                              className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-1"
-                            >
-                              <LogIn size={14} />
-                              Login
-                            </Link>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <Link
+                      to={item.path}
+                      className={`text-sm font-medium transition-colors duration-200 ${
+                        isActive(item.path)
+                          ? 'text-teal-600'
+                          : 'text-gray-700 hover:text-teal-600'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
                   )}
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
+            {/* Right Section - User Profile & Login/Logout */}
+            <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated && user ? (
-                <>
-                  {user.profile_photo_blob ? (
-                    <img
-                      src={user.profile_photo_blob}
-                      alt={user.display_name || ''}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
-                      {user.first_name?.[0]}{user.last_name?.[0]}
-                    </div>
-                  )}
-                  <div className="text-sm font-medium text-gray-700">
-                    {user.display_name || ''}
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    {user.profile_photo_blob ? (
+                      <img
+                        src={user.profile_photo_blob}
+                        alt={user.display_name || ''}
+                        className="h-8 w-8 rounded-full object-cover border-2 border-teal-100"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium border-2 border-teal-100">
+                        {user.first_name?.[0]}{user.last_name?.[0]}
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-gray-700">
+                      {user.display_name || ''}
+                    </span>
                   </div>
-                </>
-              ) : (
-                <div className="text-sm font-medium text-gray-700">
-                  Guest
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    Logout
+                  </button>
                 </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  title="Login"
+                >
+                  <LogIn size={16} />
+                </Link>
               )}
             </div>
+
+            {/* Mobile Menu Button */}
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
@@ -173,76 +161,69 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden pb-4">
-            <div className="flex items-center space-x-3 bg-gray-100 px-3 py-2 rounded-lg border border-gray-200 mb-4">
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            {/* Mobile User Section */}
+            <div className="px-4 py-3 border-b border-gray-100">
               {isAuthenticated && user ? (
-                <>
-                  {user.profile_photo_blob ? (
-                    <img
-                      src={user.profile_photo_blob}
-                      alt={user.display_name || ''}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-medium">
-                      {user.first_name?.[0]}{user.last_name?.[0]}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    {user.profile_photo_blob ? (
+                      <img
+                        src={user.profile_photo_blob}
+                        alt={user.display_name || ''}
+                        className="h-10 w-10 rounded-full object-cover border-2 border-teal-100"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-medium border-2 border-teal-100">
+                        {user.first_name?.[0]}{user.last_name?.[0]}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-xs font-medium text-gray-900">
+                        {user.display_name || ''}
+                      </div>
                     </div>
-                  )}
-                  <div className="text-sm font-medium text-gray-700">
-                    {user.display_name || ''}
                   </div>
-                </>
-              ) : (
-                <div className="text-sm font-medium text-gray-700">
-                  Guest
+                  <button
+                    onClick={() => { setIsOpen(false); handleLogout() }}
+                    className="px-4 py-2 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    Logout
+                  </button>
                 </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  title="Login"
+                >
+                  <LogIn size={20} />
+                </Link>
               )}
             </div>
-            <div className="flex flex-col space-y-2">
+
+            {/* Mobile Navigation Links */}
+            <div className="px-4 py-2 space-y-1">
               {navigation.map((item) => (
                 item.dropdown ? (
-                  <div key={item.path} className="px-3">
+                  <div key={item.path}>
                     <MobileDropdown item={item} closeMenu={() => setIsOpen(false)} />
                   </div>
-                 ) : (
-                   <div key={item.path} className={item.name === 'Home' ? 'flex flex-col' : ''}>
-                     <Link
-                       to={item.path}
-                       onClick={() => setIsOpen(false)}
-                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                         isActive(item.path)
-                           ? 'bg-teal-50 text-teal-600'
-                           : 'text-gray-700 hover:bg-gray-100 hover:text-teal-600'
-                       }`}
-                     >
-                       {item.name}
-                     </Link>
-                     {/* Show Login/Logout button directly under Home link on mobile */}
-                     {item.name === 'Home' && (
-                       <div className="ml-3 mt-1">
-                         {isAuthenticated ? (
-                           <button
-                             onClick={() => { setIsOpen(false); handleLogout() }}
-                             className="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                           >
-                             Logout
-                           </button>
-                         ) : (
-                           <Link
-                             to="/login"
-                             onClick={() => setIsOpen(false)}
-                             className="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-                           >
-                             <LogIn size={16} />
-                             Login
-                           </Link>
-                         )}
-                       </div>
-                     )}
-                   </div>
-                 )
-               ))}
-
+                ) : (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsOpen(false)}
+                    className={`block px-3 py-3 rounded-md text-sm font-medium ${
+                      isActive(item.path)
+                        ? 'bg-teal-50 text-teal-600'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-teal-600'
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
+              ))}
             </div>
           </div>
         )}
@@ -256,16 +237,24 @@ function MobileDropdown({ item, closeMenu }){
   const [open, setOpen] = useState(false)
   return (
     <div>
-      <button onClick={() => setOpen(!open)} className="w-full text-left flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">
+      <button 
+        onClick={() => setOpen(!open)} 
+        className="w-full text-left flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+      >
         <span>{item.name}</span>
-        <svg className={`ml-2 h-4 w-4 transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg className={`ml-2 h-4 w-4 transform transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       {open && (
-        <div className="mt-2 ml-2 border-l border-gray-200 pl-2">
+        <div className="mt-1 ml-4 border-l-2 border-teal-200 pl-4 space-y-1">
           {item.dropdown.map((sub) => (
-            <Link key={sub.path} to={sub.path} onClick={() => { closeMenu(); }} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <Link 
+              key={sub.path} 
+              to={sub.path} 
+              onClick={() => { closeMenu(); }} 
+              className="block px-3 py-2 text-base text-gray-600 hover:bg-gray-50 hover:text-teal-600 rounded-md transition-colors"
+            >
               {sub.name}
             </Link>
           ))}
@@ -276,4 +265,3 @@ function MobileDropdown({ item, closeMenu }){
 }
 
 export default Navbar
-

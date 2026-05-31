@@ -344,7 +344,7 @@ export function AdvancedDashboard({ user }) {
     </div>
   );
 }
-
+export default AdvancedDashboard;
 // Overview Section Component
 function OverviewSection({ stats, budgetOverview, recentActivity, pendingApprovals }) {
   return (

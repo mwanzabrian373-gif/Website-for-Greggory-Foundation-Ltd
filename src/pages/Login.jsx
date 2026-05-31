@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Camera } from 'lucide-react'
 import AuthLayout from '../components/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { usersAPI } from '../services/api'
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
+  const [profilePreview, setProfilePreview] = useState(null)
+  const [profileFile, setProfileFile] = useState(null)
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -57,6 +59,15 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleProfileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setProfileFile(file)
+    const previewUrl = URL.createObjectURL(file)
+    setProfilePreview(previewUrl)
   }
 
   const handleSubmit = async (e) => {
@@ -205,6 +216,36 @@ const Login = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Photo Upload */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {profilePreview ? (
+                    <img src={profilePreview} alt="Profile preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-12 h-12 text-gray-400" />
+                  )}
+                </div>
+                <label
+                  htmlFor="profilePhoto"
+                  className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center text-white text-sm cursor-pointer shadow-md hover:bg-blue-700"
+                  title="Add profile photo"
+                >
+                  <Camera className="w-4 h-4" />
+                </label>
+                <input
+                  id="profilePhoto"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfileChange}
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-500 text-center max-w-xs">
+                Optional: add a profile photo now.
+              </p>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Phone number / email address

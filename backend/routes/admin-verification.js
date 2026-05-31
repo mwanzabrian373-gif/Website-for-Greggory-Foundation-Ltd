@@ -163,6 +163,44 @@ router.put('/profile/:id', (req, res) => {
   });
 });
 
+// Get admin profile photo  
+router.get('/profile/:id/photo', (req, res) => {
+  const { id } = req.params;
+  
+  db.query(
+    `SELECT i.data as profile_photo_blob, i.content_type as profile_photo_type 
+     FROM admin_users au 
+     LEFT JOIN images i ON i.id = au.profile_image_id 
+     WHERE au.id = ?`,
+    [id],
+    (err, results) => {
+      if (err) {
+        console.error('[PROFILE PHOTO] Error:', err);
+        return res.status(500).json({ success: false, message: 'Database error' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ success: false, message: 'Admin not found' });
+      }
+      
+      const user = results[0];
+      
+      // Convert blob to base64 data URI
+      let profilePhotoData = null;
+      if (user.profile_photo_blob) {
+        const base64 = Buffer.from(user.profile_photo_blob).toString('base64');
+        const mimeType = user.profile_photo_type || 'image/jpeg';
+        profilePhotoData = `data:${mimeType};base64,${base64}`;
+      }
+      
+      res.json({ 
+        success: true, 
+        profile_photo: profilePhotoData 
+      });
+    }
+  );
+});
+
 // Upload admin profile photo
 router.post('/profile/:id/photo', (req, res) => {
   const { id } = req.params;
@@ -209,6 +247,47 @@ router.post('/profile/:id/photo', (req, res) => {
   });
 });
 
+// Admin Search Endpoint
+router.get('/search', (req, res) => {
+  const { q } = req.query;
+  
+  if (!q || q.trim().length < 2) {
+    return res.json({ success: true, results: [] });
+  }
+  
+  const searchTerm = `%${q.trim()}%`;
+  
+  // Search admin users
+  db.query(
+    `SELECT 
+      'user' as type,
+      CONCAT(first_name, ' ', last_name) as title,
+      email as description,
+      id,
+      'admin' as category
+     FROM admin_users
+     WHERE (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)
+     LIMIT 10`,
+    [searchTerm, searchTerm, searchTerm],
+    (err, results) => {
+      if (err) {
+        console.error('[SEARCH] Error:', err);
+        return res.json({ success: true, results: [] });
+      }
+      
+      const formattedResults = (results || []).map(row => ({
+        type: 'user',
+        title: row.title,
+        description: row.description,
+        id: row.id,
+        category: row.category
+      }));
+      
+      res.json({ success: true, results: formattedResults, count: formattedResults.length });
+    }
+  );
+});
+
 // AUTH PROTOCOL: Admin/Developer registration
 // Admins go to admin_users table, Developers go to developer_users table
 router.post('/register', async (req, res) => {
@@ -235,63 +314,70 @@ router.post('/register', async (req, res) => {
       ? 'SELECT id FROM developer_users WHERE email = ? AND deleted_at IS NULL'
       : 'SELECT id FROM admin_users WHERE email = ? AND deleted_at IS NULL';
     
-    const [existing] = await db.promise().query(checkQuery, [email]);
-    
-    if (existing.length > 0) {
-      return res.status(409).json({ 
-        success: false, 
-        message: `Email already registered as ${userRole}` 
+    db.query(checkQuery, [email], (err, results) => {
+      if (err) {
+        console.error('[REGISTER] Email check error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error during email check',
+          error: err.message
+        });
+      }
+      
+      if (results.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `${userRole === 'admin' ? 'Admin' : 'Developer'} user with this email already exists`
+        });
+      }
+      
+      // Hash password
+      bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+          console.error('[REGISTER] Password hash error:', err);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to hash password'
+          });
+        }
+        
+        const insertQuery = userRole === 'developer'
+          ? `INSERT INTO developer_users (email, password_hash, first_name, last_name, developer_level, access_level, tech_stack, specialization, team_id, github_username, linkedin_url, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`
+          : `INSERT INTO admin_users (email, password_hash, first_name, last_name, admin_level, access_level, department, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        
+        const insertValues = userRole === 'developer'
+          ? [email, hash, first_name, last_name, developer_level || 'mid', 'limited', JSON.stringify([]), 'General', null, '', '', 1]
+          : [email, hash, first_name, last_name, admin_level || 'admin', 'full', 'General', 1];
+        
+        db.query(insertQuery, insertValues, (err, result) => {
+          if (err) {
+            console.error('[REGISTER] Insert error:', err);
+            return res.status(500).json({
+              success: false,
+              message: 'Failed to create user',
+              error: err.message
+            });
+          }
+          
+          console.log('[REGISTER] User created successfully with ID:', result.insertId);
+          
+          res.status(201).json({
+            success: true,
+            message: `${userRole === 'admin' ? 'Admin' : 'Developer'} user created successfully`,
+            userId: result.insertId,
+            userRole: userRole
+          });
+        });
       });
-    }
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const displayName = `${first_name} ${last_name}`;
-    
-    let result;
-    
-    if (userRole === 'developer') {
-      // Insert into developer_users table with optional profile_image_id
-      const level = developer_level || 'mid';
-      [result] = await db.promise().query(
-        `INSERT INTO developer_users (email, password_hash, first_name, last_name, display_name, developer_level, access_level, is_active, profile_image_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'limited', true, ?, NOW())`,
-        [email, hashedPassword, first_name, last_name, displayName, level, profile_image_id || null]
-      );
-    } else {
-      // Insert into admin_users table with optional profile_image_id
-      const level = admin_level || 'admin';
-      [result] = await db.promise().query(
-        `INSERT INTO admin_users (email, password_hash, first_name, last_name, display_name, admin_level, is_active, profile_image_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, true, ?, NOW())`,
-        [email, hashedPassword, first_name, last_name, displayName, level, profile_image_id || null]
-      );
-    }
-    
-    console.log('[REGISTER] ✓ SUCCESS - Inserted into TABLE:', tableName, '| ID:', result.insertId);
-    console.log('[REGISTER] =========================================');
-    
-    res.status(201).json({
-      success: true,
-      message: `${userRole} registered successfully`,
-      userId: result.insertId,
-      table: tableName,
-      role: userRole,
-      profile_image_id: profile_image_id || null
     });
-    
   } catch (error) {
-    console.error('[REGISTER] ERROR:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Registration failed: ' + error.message 
+    console.error('[REGISTER] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed',
+      error: error.message
     });
   }
-});
-
-// Health Check
-router.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'admin-verification' });
 });
 
 module.exports = router;
